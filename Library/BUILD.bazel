@@ -1,0 +1,23 @@
+# NB: Collect the generated file from the `default` output group.
+# This should not be necessary.
+filegroup(
+    name = "generated",
+    srcs = [
+        "//Parameters:Parameters",
+    ],
+    output_group = "default",
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "Library",
+    hdrs = [
+        "Library.h",
+        "//Parameters:Parameters",
+        # ":generated",
+    ],
+    srcs = [
+        "Library.c",
+    ],
+    visibility = ["//visibility:public"],
+)

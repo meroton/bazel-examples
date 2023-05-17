@@ -1,0 +1,32 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+
+cc_binary(
+    name = "Program",
+    srcs = ["Main.c"],
+    deps = ["//Library:Library"],
+)
+
+py_binary(
+    name = "Runner",
+    srcs = ["run.py"],
+    main = "run.py",
+    data = [":Program"],
+    deps = ["@rules_python//python/runfiles"],
+)
+
+
+# Verify the program output against known results.
+# TODO: implement output file writes...
+# `run_binary` cannot capture standard out: https://github.com/bazelbuild/bazel-skylib/issues/441
+
+# run_binary(
+#     name = "ProgramOutput",
+#     tool = ":Program",
+#     out = "",
+# )
+
+# diff_test(
+#     name = "test",
+#     file1 = "reference.txt",
+#     file2 = ":Program",
+# )

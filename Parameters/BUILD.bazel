@@ -1,0 +1,13 @@
+load(":Codegen.bzl", "codegen")
+
+py_binary(
+    name = "Generate",
+    srcs = ["Generate.py"],
+    visibility = ["//visibility:private"],
+)
+
+codegen(
+    name = "Parameters",
+    srcs = [":Parameters.json"],
+    visibility = ["//visibility:public"],
+)
