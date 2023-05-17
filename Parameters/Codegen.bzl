@@ -14,12 +14,13 @@ def _impl(ctx):
         mnemonic = "GenerateParameters",
         outputs = [out],
     )
-    outs = depset([out])
 
     return [
-        OutputGroupInfo(
-            executable = outs,
-            default = outs
+        # NB: For code generation the file(s) shall be sent as `DefaultInfo::executable`,
+        # they will then be sent through the `FilesToRunProvider` provider
+        # and can be used as `srcs` in `cc_library`.
+        DefaultInfo(
+            executable = out,
         )
     ]
 
