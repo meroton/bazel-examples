@@ -3,7 +3,7 @@ load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 cc_binary(
     name = "Program",
     srcs = ["Main.c"],
-    deps = ["//Library:Library"],
+    deps = ["//Library:Static"],
 )
 
 py_binary(
