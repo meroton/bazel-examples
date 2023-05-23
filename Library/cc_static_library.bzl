@@ -57,8 +57,27 @@ def _cc_static_library_impl(ctx):
         content = "\n".join(link_flags) + "\n",
     )
 
+    # # NB(nils): the `CcInfo` was forgotten in this gist.
+    raw_ccinfo = ctx.attr.deps[0][CcInfo]
+    ccinfo = CcInfo(
+        compilation_context = raw_ccinfo.compilation_context,
+        linking_context = cc_common.create_linking_context(
+            linker_inputs = depset([cc_common.create_linker_input(
+                owner = ctx.label,
+                libraries = depset([
+                    cc_common.create_library_to_link(
+                        actions = ctx.actions,
+                        static_library = output_lib,
+                    )
+                ])
+            )])
+        ),
+    )
+
+
     return [
         DefaultInfo(files = depset([output_flags, output_lib])),
+        ccinfo
     ]
 
 cc_static_library = rule(
