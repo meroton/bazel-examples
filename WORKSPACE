@@ -1,8 +1,10 @@
 workspace(name = "example")
 
-new_local_repository(
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
     name = "bin",
-    path = "/home/nils/.local/bin/",
+    url = "https://github.com/astral-sh/ruff/releases/download/v0.0.272/ruff-x86_64-unknown-linux-gnu.tar.gz",
     build_file_content = """
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 
