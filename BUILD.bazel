@@ -1,9 +1,11 @@
-load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
-
 cc_binary(
     name = "Program",
-    srcs = ["Main.c"],
-    deps = ["//Library:Static"],
+    srcs = [
+        "Main.c"
+    ],
+    deps = [
+        "//Library:Library"
+    ],
 )
 
 py_binary(
@@ -14,6 +16,20 @@ py_binary(
     deps = ["@rules_python//python/runfiles"],
 )
 
+sh_binary(
+    name = "Touch",
+    srcs = ["touch.sh"],
+    visibility = ["//visibility:public"],
+)
+
+# genrule(
+#     name = "capture",
+#     outs = ["output"],
+#     cmd = """
+#         ./$(location Program) > "$@"
+#     """,
+#     tools = [":Program"],
+# )
 
 # Verify the program output against known results.
 # TODO: implement output file writes...
