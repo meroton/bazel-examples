@@ -15,6 +15,10 @@ native_binary(
     """,
 )
 
+register_toolchains(
+    "//toolchain:ruff_toolchain"
+)
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(

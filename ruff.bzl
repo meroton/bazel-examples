@@ -3,17 +3,18 @@
 def _impl(_, ctx):
     out = ctx.actions.declare_file(ctx.rule.attr.name + ".ruff")
     srcs = ctx.rule.files.srcs
+    tool = ctx.toolchains["//toolchain:toolchain_type"].info.tool
 
     touchargs = ctx.actions.args()
     touchargs.add(out)
-    touchargs.add(ctx.executable._tool)
+    touchargs.add(tool)
     ruffargs = ctx.actions.args()
     ruffargs.add("check")
     ruffargs.add_all(srcs)
 
     ctx.actions.run(
         executable = ctx.executable._touch,
-        tools = [ctx.executable._tool],
+        tools = [tool],
         arguments = [touchargs, ruffargs],
         inputs = srcs,
         mnemonic = "Ruff",
@@ -29,11 +30,6 @@ def _impl(_, ctx):
 ruff = aspect(
     implementation = _impl,
     attrs = {
-        "_tool": attr.label(
-            executable = True,
-            cfg = "exec",
-            default = "@bin//:Ruff",
-        ),
         "_touch": attr.label(
             executable = True,
             cfg = "exec",
@@ -41,4 +37,7 @@ ruff = aspect(
             default = "//:Touch",
         ),
     },
+    toolchains = [
+        "//toolchain:toolchain_type",
+    ],
 )

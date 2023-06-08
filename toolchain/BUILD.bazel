@@ -1,0 +1,19 @@
+load(":toolchain.bzl", "pep8_toolchain")
+
+toolchain_type(name = "toolchain_type")
+
+pep8_toolchain(
+    name = "ruff",
+    tool = "@bin//:Ruff",
+)
+
+toolchain(
+    name = "ruff_toolchain",
+    toolchain = ":ruff",
+    toolchain_type = ":toolchain_type",
+)
+
+# pep8_toolchain(
+#     name = "other-ruff",
+#     tool = "...",
+# )
