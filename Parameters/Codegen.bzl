@@ -29,9 +29,9 @@ codegen = rule(
     attrs = {
         "srcs": attr.label_list(allow_files=[".json"]),
         "_tool": attr.label(
-            executable=True,
-            cfg="exec",
-            default=":Generate",
+            executable = True,
+            cfg = "exec",
+            default = ":Generate",
         ),
     },
 )
