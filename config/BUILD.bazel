@@ -1,0 +1,46 @@
+# cc_binary(
+#     name = "mybinary",
+#     srcs = ["main.cc"],
+#     deps = select({
+#         ":arm_build": [":arm_lib"],
+#         ":x86_debug_build": [":x86_dev_lib"],
+#         "//conditions:default": [":generic_lib"],
+#     }),
+# )
+
+# config_setting(
+#     name = "arm_build",
+#     values = {"cpu": "arm"},
+# )
+
+# config_setting(
+#     name = "x86_debug_build",
+#     values = {
+#         "cpu": "x86",
+#         "compilation_mode": "dbg",
+#     },
+# )
+
+# # Attempt to use a `label_flag` to switch json file.
+# However, we must know the name of the *file* for the runfiles library to find it.
+# And we only know the label for the flag, which conveys no information about the file.
+py_binary(
+    name = "Runner",
+    srcs = ["run.py"],
+    main = "run.py",
+    # This `arg` is purely textual, we cannot reason about the real target here.
+    # For this operation to work we must use a custom rule and reason about the `File` object in Starlark.
+    # There we can construct command line arguments that tells the tool what file to look for,
+    # and it will be whichever underlying file the flag points to.
+    args = [":config_file"],
+    data = [":config_file"],
+    deps = ["@rules_python//python/runfiles"],
+)
+
+exports_files(["config.json"])
+label_flag(
+    name = "config_file",
+    build_setting_default = "config.json",
+    visibility = ["//visibility:public"],
+)
+
