@@ -16,11 +16,29 @@ def _impl(ctx):
     )
 
     return [
-        # NB: For code generation the file(s) shall be sent as `DefaultInfo::executable`,
-        # they will then be sent through the `FilesToRunProvider` provider
-        # and can be used as `srcs` in `cc_library`.
+        # NB: For code generation the file(s) shall be sent as `DefaultInfo::files`,
+        # they will then be sent through the `FilesProvider` provider
+        # and can be used as `srcs` in a `cc_library`.
+        # (`FilesToRunProvider` can also be used, but the files are not executable.)
+        #
+        #     providers:
+        #       - FileProvider
+        #       - FilesToRunProvider
+        #       - OutputGroupInfo
+
+        #     output_groups:
+        #       - _hidden_top_level_INTERNAL_
+        #       - to_json
+        #       - to_proto
+
+        #     FileProvider:
+        #       - bazel-out/k8-fastbuild/bin/Parameters/Parameters.h
+
+        #     FilesToRunProvider:
+        #       - None
+        #       - None
         DefaultInfo(
-            executable = out,
+            files = depset([out]),
         )
     ]
 
@@ -35,3 +53,29 @@ codegen = rule(
         ),
     },
 )
+    # # Label flags are good to add extra arguments that can be switched by the user,
+    # for the whole build.
+    # An exported attribute works well if it should vary for individual targets,
+    # a macro can be used to set a default value.
+    # But for switches to all targets using BUILD files is not so good,
+    # we then use a private attribute that cannot be set in the BUILD file
+    # and let the `build_setting`, in this case `label_flag`,
+    # handle the value and its default.
+    #
+    #     attrs = {
+    #         "_base": attr.label(
+    #             executable=False,
+    #             allow_single_file=["json"],
+    #             default="//config:config_file"
+    #         ),
+    #     }
+    #
+    # //config:config_file is defined thus:
+    #
+    #     exports_files(["config.json"])
+    #
+    #     label_flag(
+    #         name = "config_file",
+    #         build_setting_default = "config.json",
+    #         visibility = ["//visibility:public"],
+    #     )
