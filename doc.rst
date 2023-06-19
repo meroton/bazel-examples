@@ -389,7 +389,6 @@ And dig into a specific target::
     # Configuration: ca63adb307a1bd0f693440015ddae19ec8302707b6d51da41eab328714b1af2a
     # Execution platform: @local_config_platform//:host
 
-
 Configuration Examples
 ======================
 
@@ -498,3 +497,85 @@ on the command line rather than changing BUILD files::
     +        "//Library:Static"
          ],
      )
+
+Build a la carte
+================
+
+Some notes on build target selection.
+
+`--build_manual_tests` seems to actually add "manual" targets back into the build.
+Even for build actions, so the flag does not have the best name.
+
+By default they are not built::
+
+    $ bazel build --show_result=1000 //:all 2>&1 | grep Touch
+    $ bazel build --show_result=1000 --build_manual_tests //:all 2>&1 | grep Touch
+    Target //:Touch up-to-date:
+      bazel-bin/Touch
+
+But they show up with `--build_manual_tests`.
+
+Manual tag
+----------
+
+Some test may be expensive to execute, so we tag it as manual to avoid execution.
+Something, something about cloud billing.
+But we want to lint the source code to avoid mistakes.
+That is typically not possible with "manual" tags.
+
+These targets are tagged "manual"::
+
+    bazel query --output=label_kind 'attr(tags, manual, //...)'
+    sh_binary rule //:Touch
+    py_binary rule //Parameters:Generate
+    toolchain rule //toolchain:ruff_toolchain
+
+The linter example
+++++++++++++++++++
+
+If we make `//Parameters:Generate` manual it can not be linted through a wildcard,
+even though its docstring is too long, we really want the first build to fail::
+
+    $ bazel build --aspects //:ruff.bzl%ruff //Parameters:all
+    INFO: Analyzed 2 targets (0 packages loaded, 0 targets configured).
+    INFO: Found 2 targets...
+    INFO: Elapsed time: 0.036s, Critical Path: 0.00s
+    INFO: 1 process: 1 internal.
+    INFO: Build completed successfully, 1 total action
+
+    $ bazel build --aspects //:ruff.bzl%ruff //Parameters:Generate
+    INFO: Analyzed target //Parameters:Generate (0 packages loaded, 0 targets configured).
+    INFO: Found 1 target...
+    ERROR: /home/nils/task/meroton/basic-codegen/Parameters/BUILD.bazel:3:10: Ruff Parameters/Generate.ruff failed: (Exit 1): Touch failed: error executing command (from target //Parameters:Generate) bazel-out/k8-opt-exec-2B5CBBC6/bin/Touch bazel-out/k8-fastbuild/bin/Parameters/Generate.ruff bazel-out/k8-opt-exec-2B5CBBC6/bin/external/bin/ruff check Parameters/Generate.py
+
+    Use --sandbox_debug to see verbose messages from the sandbox and retain the sandbox build root for debugging
+    Parameters/Generate.py:3:89: E501 Line too long (94 > 88 characters)
+    Found 1 error.
+    Aspect //:ruff.bzl%ruff of //Parameters:Generate failed to build
+    Use --verbose_failures to see the command lines of failed build steps.
+    INFO: Elapsed time: 0.047s, Critical Path: 0.01s
+    INFO: 2 processes: 2 internal.
+    FAILED: Build did NOT complete successfully
+
+But with `--build_manual_tests` it does work.::
+
+    $ bazel build --aspects //:ruff.bzl%ruff --build_manual_tests //Parameters:Generate
+    INFO: Analyzed target //Parameters:Generate (0 packages loaded, 0 targets configured).
+    INFO: Found 1 target...
+    ERROR: /home/nils/task/meroton/basic-codegen/Parameters/BUILD.bazel:3:10: Ruff Parameters/Generate.ruff failed: (Exit 1): Touch failed: error executing command (from target //Parameters:Generate) bazel-out/k8-opt-exec-2B5CBBC6/bin/Touch bazel-out/k8-fastbuild/bin/Parameters/Generate.ruff bazel-out/k8-opt-exec-2B5CBBC6/bin/external/bin/ruff check Parameters/Generate.py
+
+    Use --sandbox_debug to see verbose messages from the sandbox and retain the sandbox build root for debugging
+    Parameters/Generate.py:3:89: E501 Line too long (94 > 88 characters)
+    Found 1 error.
+    Aspect //:ruff.bzl%ruff of //Parameters:Generate failed to build
+    Use --verbose_failures to see the command lines of failed build steps.
+    INFO: Elapsed time: 0.040s, Critical Path: 0.01s
+    INFO: 2 processes: 2 internal.
+    FAILED: Build did NOT complete successfully
+
+So we can allow more use of "manual", and not be wary of them sink-holing all the targets.
+But as we do enable them again in the BUILD phase, the reason why they should not still needs to be handled.
+And that may well be a platform compatibility issue that should be handled in the rule or with execution platforms.
+So if your code based can use this flag it is okay to use "manual",
+and then it only applies to *test* execution.
+But if you need to remove targets from the build phase you need to express that differently.

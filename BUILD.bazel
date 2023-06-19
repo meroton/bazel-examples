@@ -20,6 +20,7 @@ py_binary(
 
 sh_binary(
     name = "Touch",
+    tags = ["manual"],
     srcs = ["touch.sh"],
     visibility = ["//visibility:public"],
 )

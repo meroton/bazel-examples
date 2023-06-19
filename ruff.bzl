@@ -29,6 +29,8 @@ def _impl(_, ctx):
 
 ruff = aspect(
     implementation = _impl,
+    # Only apply to targets from the `py_*` family, by requiring this provider.
+    required_providers = [[PyInfo]],
     attrs = {
         "_touch": attr.label(
             executable = True,
