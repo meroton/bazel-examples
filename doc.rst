@@ -211,6 +211,130 @@ You need their config hash, which can be found by calling `bazel config` without
 
 This will give you the config hash.
 
+Providers and output groups
+---------------------------
+
+There is a cquery Starlark file in the project root `output_groups.cquery`
+that can be used to list all providers and output groups of a target.
+And pretty-print some of them, you would typically create such pretty printers for all internal providers.
+It helps a lot during rule development to inspect the rule outputs,
+and keep that code out of the implementation.
+To select the prints interactively rather than coding in print-statements.
+
+It also servers as a basis for powerful shell completion tools.
+This was used to develop the Codegen code,
+see block comments in `Parameters/BUILD.bazel` and `Parameters/Codegen.bzl`.
+
+::
+
+    $ bazel cquery --output=starlark --starlark:file=output_groups.cquery //:Program
+    providers:
+       - CcInfo
+       - InstrumentedFilesInfo
+       - DebugPackageInfo
+       - CcLauncherInfo
+       - RunEnvironmentInfo
+       - FileProvider
+       - FilesToRunProvider
+       - OutputGroupInfo
+
+    output_groups:
+       - _hidden_top_level_INTERNAL_
+       - _validation
+       - compilation_outputs
+       - compilation_prerequisites_INTERNAL_
+       - temp_files_INTERNAL_
+       - to_json
+       - to_proto
+
+    FileProvider:
+       - bazel-out/k8-fastbuild/bin/Program
+
+    FilesToRunProvider:
+       - bazel-out/k8-fastbuild/bin/Program
+       - bazel-out/k8-fastbuild/bin/Program.runfiles/MANIFEST
+
+    $ bazel cquery --output=starlark --starlark:file=output_groups.cquery //:Runner
+    INFO: Analyzed target //:Runner (1 packages loaded, 12 targets configured).
+    INFO: Found 1 target...
+    providers:
+       - PyInfo
+       - PyRuntimeInfo
+       - InstrumentedFilesInfo
+       - PyCcLinkParamsProvider
+       - FileProvider
+       - FilesToRunProvider
+       - OutputGroupInfo
+
+    output_groups:
+       - _hidden_top_level_INTERNAL_
+       - compilation_outputs
+       - compilation_prerequisites_INTERNAL_
+       - python_zip_file
+       - to_json
+       - to_proto
+
+    FileProvider:
+       - run.py
+       - bazel-out/k8-fastbuild/bin/Runner
+
+    FilesToRunProvider:
+       - bazel-out/k8-fastbuild/bin/Runner
+       - bazel-out/k8-fastbuild/bin/Runner.runfiles/MANIFEST
+
+Here is a side-by-side that may be useful::
+
+    providers:                                                   ┃  providers:
+       - *Py*Info                                                ┃     - *Cc*Info
+       - PyRuntimeInfo                                           ┃  ------------------------------------------------------------
+       - InstrumentedFilesInfo                                   ┃     - InstrumentedFilesInfo
+       - *PyCcLinkParamsProvider*                                ┃     - *DebugPackageInfo*
+    -------------------------------------------------------------┃     - CcLauncherInfo
+    -------------------------------------------------------------┃     - RunEnvironmentInfo
+       - FileProvider                                            ┃     - FileProvider
+       - FilesToRunProvider                                      ┃     - FilesToRunProvider
+       - OutputGroupInfo                                         ┃     - OutputGroupInfo
+                                                                 ┃
+    output_groups:                                               ┃  output_groups:
+       - _hidden_top_level_INTERNAL_                             ┃     - _hidden_top_level_INTERNAL_
+    -------------------------------------------------------------┃     - _validation
+       - compilation_outputs                                     ┃     - compilation_outputs
+       - compilation_prerequisites_INTERNAL_                     ┃     - compilation_prerequisites_INTERNAL_
+       - *python_zip_file*                                       ┃     - *temp_files_INTERNAL_*
+       - to_json                                                 ┃     - to_json
+       - to_proto                                                ┃     - to_proto
+                                                                 ┃
+    FileProvider:                                                ┃  FileProvider:
+       - *run.py*                                                ┃     - *bazel-out/k8-fastbuild/bin/Program*
+       - bazel-out/k8-fastbuild/bin/Runner                       ┃  ------------------------------------------------------------
+                                                                 ┃
+    FilesToRunProvider:                                          ┃  FilesToRunProvider:
+       - bazel-out/k8-fastbuild/bin/*Runner*                     ┃     - bazel-out/k8-fastbuild/bin/*Program*
+       - bazel-out/k8-fastbuild/bin/*Runner*.runfiles/MANIFEST   ┃     - bazel-out/k8-fastbuild/bin/*Program*.runfiles/MANIFEST
+
+
+Pretty-print providers
+++++++++++++++++++++++
+
+This pretty-prints the custom `ToolchainInfo` providers from `//toolchain:toolchain.bzl`::
+
+    $ bazel cquery --output=starlark --starlark:file=output_groups.cquery //toolchain:ruff
+    providers:
+       - ToolchainInfo
+       - FileProvider
+       - FilesToRunProvider
+       - OutputGroupInfo
+
+    ...
+
+    ToolchainInfo:
+       - info.tool: bazel-out/k8-opt-exec-2B5CBBC6/bin/external/bin/ruff
+
+Any provider can be printed.
+One tip is to check for struct-members with `dir(<some struct>)`, so you know what can be dereferenced,
+when writing the pretty-printing code.
+
+
 Aquery
 ======
 

@@ -66,6 +66,6 @@ def format(target):
     if key in _providers:
         val = _providers[key]
         res += header(key)
-        res += LINE_SEP + "info.tool: " + val.info.tool.path
+        res += LIST_SEP + "info.tool: " + val.info.tool.path
 
     return res
