@@ -8,14 +8,29 @@ import json
 
 from typing import Dict, List
 
+from rules_python.python.runfiles import \
+    runfiles  # Bazel's runfiles library, to find runtime dependencies.
+
 def main(program, args: List[str]):
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', help="Output file", required=True)
+    parser.add_argument('--base', help="Base config file", required=True)
     parser.add_argument('inputs', help="input files", nargs='+')
 
     ns = parser.parse_args(args)
-    output = ns.output
+    base = ns.base
     inputs = ns.inputs
+    output = ns.output
+
+    r = runfiles.Create()
+    print("lookup:", base)  # DEBUG
+    found = r.Rlocation(base)
+    print("found:", found)  # DEBUG
+
+    if not found:
+        print(f"Could not find base config: {base}", file=sys.stderr)
+        sys.exit(1)
+    inputs.append(found)
 
     contents: List[Dict] = [{}] * len(inputs)
     for i, input in enumerate(inputs):

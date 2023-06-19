@@ -4,13 +4,14 @@ def _impl(ctx):
     out = ctx.actions.declare_file(ctx.attr.name + ".h")
 
     args = ctx.actions.args()
+    args.add("--base", ctx.files._base[0])
     args.add("--output", out.path)
     args.add_all(ctx.files.srcs)
 
     ctx.actions.run(
         executable = ctx.executable._tool,
         arguments = [args],
-        inputs = ctx.files.srcs,
+        inputs = ctx.files.srcs + ctx.files._base,
         mnemonic = "GenerateParameters",
         outputs = [out],
     )
@@ -54,6 +55,11 @@ codegen = rule(
             cfg = "exec",
             default = ":Generate",
         ),
+        "_base": attr.label(
+            executable=False,
+            allow_single_file=["json"],
+            default="//config:config_file"
+        ),
     },
 )
     # # Label flags are good to add extra arguments that can be switched by the user,
@@ -64,21 +70,3 @@ codegen = rule(
     # we then use a private attribute that cannot be set in the BUILD file
     # and let the `build_setting`, in this case `label_flag`,
     # handle the value and its default.
-    #
-    #     attrs = {
-    #         "_base": attr.label(
-    #             executable=False,
-    #             allow_single_file=["json"],
-    #             default="//config:config_file"
-    #         ),
-    #     }
-    #
-    # //config:config_file is defined thus:
-    #
-    #     exports_files(["config.json"])
-    #
-    #     label_flag(
-    #         name = "config_file",
-    #         build_setting_default = "config.json",
-    #         visibility = ["//visibility:public"],
-    #     )
