@@ -1,15 +1,210 @@
 Documentation
 ~~~~~~~~~~~~~
 
+Query
+=====
+
+The basic use for query is to show what targets are available
+and what kinds they are::
+
+    $ bazel query //...
+    $ bazel query --output=label_kind //...
+
+And advanced use can show dependencies between targets
+and limit scopes::
+
+    # all dependencies within //Library/...
+    $ bazel query 'deps(//:Runner) intersect //Library/...'
+    $ bazel query --output=label_kind 'allpaths(//:Runner, //Parameters)'
+    cc_binary rule //:Program
+    py_binary rule //:Runner
+    cc_library rule //Library:Library
+    codegen rule //Parameters:Parameters
+
+    # We also depend on the python code generation tool
+    $ bazel query --output=label_kind 'allpaths(//:Runner, //Parameters:all)'
+    ...
+    py_binary rule //Parameters:Generate
+
+    # But not if we disable implicit and tool dependencies (--notool_deps)
+    # This is the same as the allpaths query.
+    $ bazel query --output=label_kind --noimplicit_deps 'allpaths(//:Runner, //Parameters:all)'
+    cc_binary rule //:Program
+    py_binary rule //:Runner
+    cc_library rule //Library:Library
+    codegen rule //Parameters:Parameters
+
+
+We can find targets expanded by macros, and filter based on the macro name
+"generator_function" is the old name for "macro", some such old names leak through the Bazel abstractions.
+
+If we had a "write_source_file" target and macro, this would show both a write and a test target.
+You could add that for the reference output of `//:Program`!
+https://github.com/bazelbuild/bazel-skylib/blob/main/docs/write_file_doc.md
+
+::
+
+    $ bazel query 'attr(generator_function, diff_test, //:all)'
+    _diff_test rule //:test
+
+Macros can be expanded to see all the attributes,
+compare this to what you see in the BUILD file.
+There is also a stack trace with filepaths to open all relevant BUILD and .bzl files.::
+
+    $ bazel query --output=build //:test
+    # /home/nils/task/meroton/basic-codegen/BUILD.bazel:48:10
+    _diff_test(
+      name = "test",
+      generator_name = "test",
+      generator_function = "diff_test",
+      generator_location = "/home/nils/task/meroton/basic-codegen/BUILD.bazel:48:10",
+      file1 = "//:reference.txt",
+      file2 = "//:capture",
+      is_windows = select({"@bazel_tools//src/conditions:host_windows": True, "//conditions:default": False}),
+    )
+    # Rule test instantiated at (most recent call last):
+    #   /home/nils/task/meroton/basic-codegen/BUILD.bazel:48:10                                                               in <toplevel>
+    #   /home/nils/.cache/bazel/_bazel_nils/38ee34394b564c6d0289781c6b6bf0c1/external/bazel_skylib/rules/diff_test.bzl:169:15 in diff_test
+    # Rule _diff_test defined at (most recent call last):
+    #   /home/nils/.cache/bazel/_bazel_nils/38ee34394b564c6d0289781c6b6bf0c1/external/bazel_skylib/rules/diff_test.bzl:140:18 in <toplevel>
+
+    $ bazel query --output=build //:capture
+    # /home/nils/task/meroton/basic-codegen/BUILD.bazel:39:8
+    genrule(
+      name = "capture",
+      tools = ["//:Program"],
+      outs = ["//:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"],
+      cmd = "\n        ./$(location Program) > \"$@\"\n    ",
+    )
+
+Cquery
+======
+
+Cquery is used to query the configured graph, where selects are followed.
+So we only see dependencies for desired options and operating systems.
+You can always query for a different operating system than your own,
+just disable the auto-platform-configuration (if it is enabled),
+it will automatically add --config=linux and so on.
+
+    --noenable_platform_specific_config
+
+Here is an example that shows the configuration of all targets in a graph.
+We do some `sed` to make it look nicer.::
+
+    $ bazel cquery                             \
+        --notool_deps --noimplicit_deps        \
+        'deps(//:Runner)' --output=graph       \
+        | sed                                  \
+            -e 's/(ca63adb)/(Generated)/g'     \
+            -e 's/(null)/(Source)/g'           \
+            -e '{/->/b; s/(Source)"/& [style=filled, fillcolor='lightgreen']/}'
+    digraph mygraph {
+      node [shape=box];
+      "//:Runner (Generated)"
+      "//:Runner (Generated)" -> "//:Program (Generated)"
+      "//:Runner (Generated)" -> "//:run.py (Source)"
+      "//:Runner (Generated)" -> "@rules_python//python/runfiles:runfiles (Generated)"
+    ...
+
+This can be rendered to an svg with `graphviz` and the `dot` program.
+
+   $ bazel cquery ... | dot -Tsvg -o graph.svg
+
+Config hash
+-----------
+
+In this example the config hash is "ca63adb", it may differ for you,
+update the `sed` command accordingly.
+
+    $ bazel cquery //:Runner
+    //:Runner (ca63adb)
+
+You can inspect this with `bazel config` to show platforms and many, many, more options.::
+
+    $ bazel config ca63adb | head
+    INFO: Displaying config with id ca63adb
+    BuildConfigurationValue ca63adb307a1bd0f693440015ddae19ec8302707b6d51da41eab328714b1af2a:
+    Skyframe Key: BuildConfigurationKey[ca63adb307a1bd0f693440015ddae19ec8302707b6d51da41eab328714b1af2a]
+    ...
+
+ST hash
+-------
+
+This example does not have any ST hashes, they stick out from config hashes, in that they have `ST_` in the middle.
+Those are created by transitions that change the config of a target,
+and cannot be printed directly with `bazel config <ST hash>`.
+You need their config hash, which can be found by calling `bazel config` without any arguments.::
+
+    $ bazel config | grep <ST hash>
+
+This will give you the config hash.
+
+Aquery
+======
+
+To show actions and their command lines use `aquery`.
+You can see a summary of what will be done::
+
+    $ bazel aquery --output=summary //...
+    47 total actions.
+
+    Mnemonics:
+      CcStrip: 1
+      TestRunner: 1
+      SolibSymlink: 1
+      ArMerge: 1
+      CppArchive: 1
+      Genrule: 1
+      ExecutableSymlink: 1
+      GenerateParameters: 1
+      CppLink: 2
+      CppCompile: 2
+      PythonZipper: 3
+      FileWrite: 6
+      TemplateExpand: 6
+      SymlinkTree: 6
+      SourceSymlinkManifest: 6
+      Middleman: 8
+
+    Configurations:
+      k8-fastbuild: 47
+
+    Execution Platforms:
+      @local_config_platform//:host: 47
+
+
+And dig into a specific target::
+
+    $ bazel aquery //Parameters:Parameters
+    action 'GenerateParameters Parameters/Parameters.h'
+      Mnemonic: GenerateParameters
+      Target: //Parameters:Parameters
+      Configuration: k8-fastbuild
+      Execution platform: @local_config_platform//:host
+      ActionKey: 1a618927f613610aaa53e7e0d055f716011b7552e900ac3a8e20058108276ef0
+      Inputs: [Parameters/Generate.py, Parameters/Parameters.json, bazel-out/k8-opt-exec-2B5CBBC6/bin/Parameters/Generate, bazel-out/k8-opt-exec-2B5CBBC6/internal/_middlemen/Parameters_SGenerate-runfiles, config/config.json]
+      Outputs: [bazel-out/k8-fastbuild/bin/Parameters/Parameters.h]
+      Command Line: (exec bazel-out/k8-opt-exec-2B5CBBC6/bin/Parameters/Generate \
+        --base \
+        config/config.json \
+        --output \
+        bazel-out/k8-fastbuild/bin/Parameters/Parameters.h \
+        Parameters/Parameters.json)
+    # Configuration: ca63adb307a1bd0f693440015ddae19ec8302707b6d51da41eab328714b1af2a
+    # Execution platform: @local_config_platform//:host
+
+
+Configuration Examples
+======================
 Label Flag
-==========
+----------
 
 A contrived example is written, and developed through the commit history
 to show how a `label_flag` can be used to add configuration to a rule.
 It will be used by the tool, but belongs to the rule as we will see below.
 
 Runfile to a binary
--------------------
++++++++++++++++++++
 
 We see that it does not work well for a `py_binary` to use it as a data dependency,
 as we do not know what *file* to look for within the runfiles.
@@ -51,7 +246,7 @@ But we still cannot find it as a runfile::
     FileNotFoundError: [Errno 2] No such file or directory: '/home/nils/.cache/bazel/_bazel_nils/38ee34394b564c6d0289781c6b6bf0c1/sandbox/linux-sandbox/20/execroot/example/bazel-out/k8-opt-exec-2B5CBBC6/bin/Parameters/Generate.runfiles/config/config.json'
 
 Runfiles
---------
+++++++++
 
 This illustrates some points, we did "find" the runfile, with the library.
 But that file could not be opened, and the action failed.
@@ -67,7 +262,7 @@ Runfiles do not work so well if the files are expected to change,
 but static file names can be given as args, as we saw in //Config:Runner.
 
 Just a regular input to the action
-----------------------------------
+++++++++++++++++++++++++++++++++++
 
 We just keep it simple, we do not need the runfiles library here.
 As the config does not belong to the tool,
