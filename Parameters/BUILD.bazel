@@ -11,3 +11,35 @@ codegen(
     srcs = [":Parameters.json"],
     visibility = ["//visibility:public"],
 )
+
+# # Convert 'OutputGroupInfo' files to 'File(ToRun)Provider' so they can be consumed.
+# If `codegen` just returns an output group this can be used to depend on them.
+#
+# Convert from `OutputGroupInfo`::
+#
+#     $ bazel cquery --output=starlark --starlark:file=output_groups.cquery //Parameters:Parameters
+#     FileProvider:
+#
+#     FilesToRunProvider:
+#        - None
+#        - None
+#
+#     OutputGroupInfo default:
+#        - bazel-out/k8-fastbuild/bin/Parameters/Parameters.h
+#
+# To `File(ToRun)Provider`::
+#
+#     $ bazel cquery --output=starlark --starlark:file=output_groups.cquery //Parameters:filter
+#     ...
+#     FileProvider:
+#        - bazel-out/k8-fastbuild/bin/Parameters/Parameters.h
+#
+#     FilesToRunProvider:
+#        - bazel-out/k8-fastbuild/bin/Parameters/Parameters.h
+#        - None
+#
+filegroup(
+    name = "filter",
+    srcs = [":Parameters"],
+    output_group = "default",
+)

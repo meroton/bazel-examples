@@ -1,0 +1,71 @@
+"""Crude pretty-printer for providers and output groups.
+
+    $ bazel cquery --output=starlark --starlark:file=output_groups.cquery //path/to:target
+
+    # Evaluate it again with each change to this file
+    # https://github.com/eradman/entr
+    $ echo "output_groups.cquery" \
+        | entr \
+        bazel cquery --output=starlark --starlark:file=output_groups.cquery //path/to:target
+"""
+
+
+LIST_SEP = "   - "
+LINE_SEP = "\n" + LIST_SEP
+_SEP = "\n   "
+
+def mapPath(x):
+    if x == None:
+        return "None"
+    else:
+        return x.path
+
+def header(x):
+    return "\n" + x + ":\n"
+
+
+def format(target):
+    _providers = providers(target)
+    output = _providers.get("OutputGroupInfo")
+
+    __providers = LIST_SEP + LINE_SEP.join(_providers.keys())
+
+    _output_groups = LIST_SEP + LINE_SEP.join(dir(output))
+
+    res = "\n".join(["providers:", __providers, "", "output_groups:", _output_groups]) + "\n"
+
+    # This provider is often (always?) present, but may be empty.
+    key = 'FileProvider'
+    if key in _providers:
+        res += header(key)
+        val = _providers[key]
+        files = val.files_to_build.to_list()
+        if files:
+            joined = LINE_SEP.join([f.path for f in files])
+            res += (LIST_SEP + joined) + "\n"
+
+    key = 'FilesToRunProvider'
+    if key in _providers:
+        val = _providers[key]
+
+        res += header(key)
+        res += "{sep}{a}\n{sep}{b}\n".format(
+            sep = LIST_SEP,
+            a = mapPath(val.executable),
+            b = mapPath(val.runfiles_manifest)
+        )
+
+    # NB: You may iterate over all output groups and print them here. This just checks default.
+    group = "default"
+    if group in output:
+        res += header("OutputGroupInfo " + group)
+        res += LIST_SEP + ", ".join([f.path for f in output[group].to_list()])
+        res += "\n"
+
+    key = 'ToolchainInfo'
+    if key in _providers:
+        val = _providers[key]
+        res += header(key)
+        res += LINE_SEP + "info.tool: " + val.info.tool.path
+
+    return res
