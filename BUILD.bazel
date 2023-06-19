@@ -1,3 +1,5 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+
 cc_binary(
     name = "Program",
     srcs = [
@@ -22,27 +24,29 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
 
-# genrule(
-#     name = "capture",
-#     outs = ["output"],
-#     cmd = """
-#         ./$(location Program) > "$@"
-#     """,
-#     tools = [":Program"],
-# )
+# # Verify the program output against known results.
+# The `outs` attribute creates an output artifact
+# that can actually be used in the `diff_test`,
+# but that is confusing as dependencies are customarily taken on the `name` attribute.
+# And that makes it much easier to understand who uses the result of the `genrule`.
+#
+# Errors for missing files are a bit ugly (I removed the "e" from "capture"):
+#
+#   ERROR: /home/nils/task/meroton/basic-codegen/BUILD.bazel:38:10: Middleman _middlemen/test-test.sh-runfiles failed: missing input file '//:captur'
+#   ERROR: /home/nils/task/meroton/basic-codegen/BUILD.bazel:38:10: Middleman _middlemen/test-test.sh-runfiles failed: 1 input file(s) do not exist
+#   ERROR: /home/nils/task/meroton/basic-codegen/BUILD.bazel:38:10 Middleman _middlemen/test-test.sh-runfiles failed: 1 input file(s) do not exist
 
-# Verify the program output against known results.
-# TODO: implement output file writes...
-# `run_binary` cannot capture standard out: https://github.com/bazelbuild/bazel-skylib/issues/441
+genrule(
+    name = "capture",
+    outs = ["XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"],
+    cmd = """
+        ./$(location Program) > "$@"
+    """,
+    tools = [":Program"],
+)
 
-# run_binary(
-#     name = "ProgramOutput",
-#     tool = ":Program",
-#     out = "",
-# )
-
-# diff_test(
-#     name = "test",
-#     file1 = "reference.txt",
-#     file2 = ":Program",
-# )
+diff_test(
+    name = "test",
+    file1 = "reference.txt",
+    file2 = ":capture",
+)
