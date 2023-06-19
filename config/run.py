@@ -11,7 +11,7 @@ from rules_python.python.runfiles import \
 
 
 def main(runfile: str, args: List[str]):
-    # breakpoint()  # You can set breakpoints for `pdb` in the source file.
+    breakpoint()  # You can set breakpoints for `pdb` in the source file.
     #
     # `bazel run --run_under pdb //config:Runner` opens the launcher script in pdb,
     # but that calls `subprocess.Call` on the real program,
@@ -40,7 +40,8 @@ if __name__ == '__main__':
 
     runfile = sys.argv[1]
     # Need some mangling to help with the example.
-    # As we only get the textual label, we can at least look (in vain) for that.
+    # As we only get the textual label,
+    # this converts it to a file path, we can look for that (in vain).
     if runfile.startswith(":"):
         runfile = runfile.replace(":", "config/")
 

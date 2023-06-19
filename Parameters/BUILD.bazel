@@ -3,7 +3,6 @@ load(":Codegen.bzl", "codegen")
 py_binary(
     name = "Generate",
     srcs = ["Generate.py"],
-    deps = ["@rules_python//python/runfiles"],
     visibility = ["//visibility:private"],
 )
 
