@@ -37,12 +37,12 @@ def _impl(ctx):
         #     FilesToRunProvider:
         #       - None
         #       - None
+        DefaultInfo(
+            files = depset([out]),
+        ),
         OutputGroupInfo(
             default = depset([out])
         ),
-        # DefaultInfo(
-        #     files = depset([out]),
-        # )
     ]
 
 codegen = rule(
