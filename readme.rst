@@ -579,3 +579,22 @@ And that may well be a platform compatibility issue that should be handled in th
 So if your code based can use this flag it is okay to use "manual",
 and then it only applies to *test* execution.
 But if you need to remove targets from the build phase you need to express that differently.
+
+Before this flag nothing could be done
+++++++++++++++++++++++++++++++++++++++
+
+Before `--build_manual_tests` was introduce there was no way to build manual targets through wildcards.
+There is (still) a flag to filter and remove based on tags, and it can also add stuff back.
+But anything tagged as manual can not be retrieved through `--build_tag_filters`.
+Neither of the following does anything::
+
+    $ bazel build --aspects //:ruff.bzl%ruff --build_tag_filters=enable_again //Parameters:all
+    $ bazel build --aspects //:ruff.bzl%ruff --build_tag_filters=+enable_again //Parameters:all
+    $ bazel build --aspects //:ruff.bzl%ruff --build_tag_filters=manual //Parameters:all
+    $ bazel build --aspects //:ruff.bzl%ruff --build_tag_filters=+manual //Parameters:all
+
+The workaround then was to use a query, and xargs that to `bazel build`.::
+
+    bazel query //... | xargs bazel build
+
+The targets are then all named will be built.
