@@ -714,3 +714,49 @@ But the classic default argument through a macro is not good,
 because then it could be changed.
 
 Can we make a macro factory?
+
+Make a macro factory
+--------------------
+
+It is straight forward, the trick is to use a lambda for the macro inside the factory.
+And we can now query again::
+
+    bazel query --output=build //factory:test
+    # /home/nils/task/meroton/basic-codegen/factory/BUILD.bazel:3:8
+    _codegen(
+      name = "test",
+      visibility = ["//visibility:private"],
+      tags = [],
+      generator_name = "test",
+      generator_function = "lambda",
+      generator_location = "factory/BUILD.bazel:3:8",
+      srcs = ["//factory:a.json"],
+      base = "//factory:base.json",
+    )
+    # Rule test instantiated at (most recent call last):
+    #   /home/nils/task/meroton/basic-codegen/factory/BUILD.bazel:3:8   in <toplevel>
+    #   /home/nils/task/meroton/basic-codegen/factory/factory.bzl:29:97 in lambda
+    # Rule _codegen defined at (most recent call last):
+    #   /home/nils/task/meroton/basic-codegen/factory/factory.bzl:64:25 in <toplevel>
+    #   /home/nils/task/meroton/basic-codegen/factory/factory.bzl:9:19  in make
+
+It is a macro, with the name "lambda", oh well,
+and the base is clearly visible.
+But it is not an exported attribute and can not be modified in the BUILD file.
+
+Nit: The rule name is stupid
+----------------------------
+
+This is an unfortunate consequence of the rule using whichever variable name it is assigned to,
+and the macro must have its name.
+And we often want them to be the same,
+the easy way out is to add an underscore,
+the more structured way is to hoist the rule to another file, "rule.bzl" or some such,
+and have the macro load that.
+The load statement can rename it.
+
+::
+
+    load(":rule.bzl", realrule = "rule")
+    def rule(...):
+        realrule(...)
