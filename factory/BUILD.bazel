@@ -1,0 +1,6 @@
+load(":factory.bzl", "codegen")
+
+codegen(
+    name = "test",
+    srcs = ["a.json"],
+)

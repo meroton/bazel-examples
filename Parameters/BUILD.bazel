@@ -4,7 +4,7 @@ py_binary(
     name = "Generate",
     srcs = ["Generate.py"],
     tags = ["manual", "enable_again"],
-    visibility = ["//visibility:private"],
+    visibility = ["//visibility:public"],
 )
 
 codegen(
