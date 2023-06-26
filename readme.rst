@@ -13,21 +13,24 @@ There is also a linter aspect for the python code, that is configured with a too
 ::
 
     $ bazel query //... --output=maxrank
+    0 //:Runner
+    0 //:test
+    0 //toolchain:ruff_toolchain
     0 //:Touch
+    0 //config:ConfiguredBinary
     0 //toolchain:ruff
     0 //config:Runner
-    0 //toolchain:ruff_toolchain
-    0 //:test
-    0 //Library:Static
     0 //Parameters:filter
-    0 //:Runner
-    1 //:capture
+    1 //Library:Static
+    1 //config:debug_build
     1 //toolchain:toolchain_type
+    1 //:capture
+    1 //config:opt_build
     2 //:Program
     3 //Library:Library
     4 //Parameters:Parameters
-    5 //config:config_file
     5 //Parameters:Generate
+    5 //config:config_file
 
 The main points to build and run are `//:Runner` and `//:Program`.
 This compiles all the code and generated defines that are printed below::
@@ -50,7 +53,6 @@ The generated code is available here::
     $ bazel build //Parameters
     Target //Parameters:Parameters up-to-date:
       bazel-bin/Parameters/Parameters.h
-
 
     # This code generator is handled by a bazel rule
     $ bazel run //Parameters:Generate -- --help
@@ -135,6 +137,28 @@ There is also a stack trace with filepaths to open all relevant BUILD and .bzl f
       cmd = "\n        ./$(location Program) > \"$@\"\n    ",
     )
 
+We can also look for certain kinds of rules with the `kind` function: `kind(<regexp>, <pattern>)`.::
+
+    $ bazel query 'kind(config_setting, //...)'
+    config_setting rule //config:debug_build
+    config_setting rule //config:opt_build
+
+Source files are also available, though they are not themselves part of the wildcard for `//...`::
+
+    $ bazel query --output=label 'kind("source file", deps(//...))' | grep '^//'
+    //:Main.c
+    //:reference.txt
+    //:run.py
+    //:touch.sh
+    //Library:Library.c
+    //Library:Library.h
+    //Parameters:Generate.py
+    //Parameters:Parameters.json
+    //config:main.c
+    //config:run.py
+
+Without the `grep` we see source files from external repositories too!
+
 External repositories
 ---------------------
 
@@ -159,6 +183,34 @@ just disable the auto-platform-configuration (if it is enabled),
 it will automatically add --config=linux and so on.
 
     --noenable_platform_specific_config
+
+Follow selects
+--------------
+
+We have a configured dependency in `//config:ConfiguredBinary`.
+With just query we see that it depends of both the regular and the statically linked library.::
+
+    bazel query 'deps(//config:ConfiguredBinary, 1) intersect //Library:all'
+    cc_library rule //Library:Library
+    cc_static_library rule //Library:Static
+
+But the `config_setting` are mutually exclusive, based on the `--compilation_mode={fastbuild,opt,debug}` value.
+The flag is customarily used in its short form `-c=<value>`, and `fastbuild` is the default.
+
+bash ::
+
+    $ diff \
+        <(bazel cquery $TERSE -c fastbuild 'deps(//config:ConfiguredBinary, 1) intersect //Library:all') \
+        <(bazel cquery -c opt 'deps(//config:ConfiguredBinary, 1) intersect //Library:all')
+    1c1
+    < //Library:Library (ca63adb)
+    ---
+    > //Library:Static (bfe6c4d)
+
+This switch will also show up visually in the `graph` output format.
+
+Graph
+-----
 
 Here is an example that shows the configuration of all targets in a graph.
 We do some `sed` to make it look nicer.::
@@ -392,12 +444,22 @@ And dig into a specific target::
 Configuration Examples
 ======================
 
+Select
+------
+
+There is an example `cc_binary` with a `select` statement,
+used to illustrate how `cquery` can help understanding dependencies,
+see `Follow selects`_.
+
 Label Flag
 ----------
 
 A contrived example is written, and developed through the commit history
 to show how a `label_flag` can be used to add configuration to a rule.
 It will be used by the tool, but belongs to the rule as we will see below.
+This is good for ad-hoc selection, that does not belong to any well defined `config_settings`.
+Config files for tools that do not encode platform information is a good example.
+But there is a big area where `select` and `label_flags` can be used to solve the same problem.
 
 Runfile to a binary
 +++++++++++++++++++

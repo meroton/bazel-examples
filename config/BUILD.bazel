@@ -1,25 +1,31 @@
-# cc_binary(
-#     name = "mybinary",
-#     srcs = ["main.cc"],
-#     deps = select({
-#         ":arm_build": [":arm_lib"],
-#         ":x86_debug_build": [":x86_dev_lib"],
-#         "//conditions:default": [":generic_lib"],
-#     }),
-# )
+# # Configure a binary based on compilation mode
+# We do not use CPU here, as the official documentation example does
+# because our toolchain is not setup to work on different CPUs.
+# With a better toolchain it would of course work.
+# Official documentation: https://bazel.build/configure/attributes
+cc_binary(
+    name = "ConfiguredBinary",
+    srcs = ["main.c"],
+    deps = select({
+        ":opt_build": ["//Library:Static"],
+        ":debug_build": ["//Library:Static"],
+        "//conditions:default": ["//Library:Library"],
+    }),
+)
 
-# config_setting(
-#     name = "arm_build",
-#     values = {"cpu": "arm"},
-# )
+config_setting(
+    name = "opt_build",
+    values = {
+        "compilation_mode": "opt",
+    },
+)
 
-# config_setting(
-#     name = "x86_debug_build",
-#     values = {
-#         "cpu": "x86",
-#         "compilation_mode": "dbg",
-#     },
-# )
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+)
 
 # # Attempt to use a `label_flag` to switch json file.
 # However, we must know the name of the *file* for the runfiles library to find it.
