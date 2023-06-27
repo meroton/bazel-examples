@@ -817,19 +817,35 @@ And observe the difference in the output file `flags` (with linebreaks for each 
 
 .. _built-in features: https://bazel.build/docs/cc-toolchain-config-reference#legacy-features-patching-logic
 
+Problem Statement
+-----------------
+
+This was prompted by the weird observation that with some toolchains
+using `features = [<foobar>]` the action disappears.
+So we seek to reproduce the problem and find a solution.
+
+There are some currently missing, that we may need to implement
+
+    1) Custom toolchain
+    2) Custom feature that modifies the flags
+
 Find all the source files
 -------------------------
 But we must apply this recursively,
 to find all the source files.
 
 We create an aspect and read the `target.actions` to find them.
-Note: the `actions` are not part of the rule attribute from the aspect's point of view.
 We can now build an initial aspect, collecting one file per transitive target.
+Note: we disable the default output group for the build,
+as that fails to compile when we tinker with the dependencies.
 
     $ bazel build //:Program --aspects=//Library:compilation-flags.bzl%compile_flags --output_groups=flags
       bazel-bin/Library/Library.flags
       bazel-bin/Program.flags
 
+Flag changes through `features` show up just like before, in `Library.flags`.
+
+Note: the `actions` are not part of the rule attribute from the aspect's point of view.
 Aside: using `ctx.rule.attr.actions`
 ++++++++++++++++++++++++++++++++++++
 This does not work::
@@ -861,15 +877,3 @@ But the aspect can not, even when applied directly to it::
     ...
     Error in fail: No actions found for dep: 'Library'
     ...
-
-Problem Statement
------------------
-
-This was prompted by the weird observation that with some toolchains
-using `features = [<foobar>]` the action disappears.
-So we seek to reproduce the problem and find a solution.
-
-There are some currently missing, that we may need to implement
-
-    1) Custom toolchain
-    2) Custom feature that modifies the flags
