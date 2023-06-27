@@ -35,7 +35,7 @@ def format(target):
     res = "\n".join(["providers:", __providers, "", "output_groups:", _output_groups]) + "\n"
 
     # This provider is often (always?) present, but may be empty.
-    key = 'FileProvider'
+    key = "FileProvider"
     if key in _providers:
         res += header(key)
         val = _providers[key]
@@ -44,7 +44,7 @@ def format(target):
             joined = LINE_SEP.join([f.path for f in files])
             res += (LIST_SEP + joined) + "\n"
 
-    key = 'FilesToRunProvider'
+    key = "FilesToRunProvider"
     if key in _providers:
         val = _providers[key]
 
@@ -62,10 +62,24 @@ def format(target):
         res += LIST_SEP + ", ".join([f.path for f in output[group].to_list()])
         res += "\n"
 
-    key = 'ToolchainInfo'
+    key = "ToolchainInfo"
     if key in _providers:
         val = _providers[key]
         res += header(key)
         res += LIST_SEP + "info.tool: " + val.info.tool.path
+
+    key = "CcInfo"
+    if key in _providers:
+        # ["compilation_context", "debug_context", "linking_context", "to_json", "to_proto", "transitive_native_libraries"]
+        val = _providers[key]
+        res += header(key + " (not printed)")
+
+        compilation = val.compilation_context
+        linking = val.linking_context
+        debug = val.debug_context
+
+        res += LIST_SEP + "compilation_context:"
+        res += LINE_SEP + "linking_context:"
+        res += LINE_SEP + "debug_context:"
 
     return res

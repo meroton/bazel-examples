@@ -166,7 +166,7 @@ Can be shown::
 
     bazel query //external:'*'
 
-There are probably more than you thought, most of them are built in to Bazel,
+There are probably more than you thought, most of them are built-in to Bazel,
 and not actually used in this repository.
 However, the real name `@<repo>//...` must be used to query for dependency paths.::
 
@@ -760,3 +760,68 @@ The load statement can rename it.
     load(":rule.bzl", realrule = "rule")
     def rule(...):
         realrule(...)
+
+Find the compilation flags for all source files in a cc target
+==============================================================
+
+Our next journey takes us through custom rules and aspects,
+digging into special attributes and providers.
+We will create a report of all compilation command lines
+used for building a target.
+
+We start out with a simple wrapper rule to look at the `ctx.attr.actions` listing.
+This is a meta attribute provided to us by Bazel (it is not set explicitly in the rule implementation).
+
+We can build this for the top-program::
+
+    $ bazel build //:flags
+    target //:flags up-to-date:
+      bazel-bin/flags
+    $ cat bazel-bin/flags
+    {
+        Mnemonic: CppCompile,
+        Args: [context.args() object],
+        Argv: ["/usr/bin/gcc", "-U_FORTIFY_SOURCE", "-fstack-protector", "-Wall", "-Wunused-but-set-parameter", "-Wno-free-nonheap-object", "-fno-omit-frame-pointer", "-MD", "-MF", "bazel-out/k8-fastbuild/bin/_objs/Program/Main.pic.d", "-frandom-seed=bazel-out/k8-fastbuild/bin/_objs/Program/Main.pic.o", "-fPIC", "-DBAZEL_CURRENT_REPOSITORY=\"\"", "-iquote", ".", "-iquote", "bazel-out/k8-fastbuild/bin", "-iquote", "external/bazel_tools", "-iquote", "bazel-out/k8-fastbuild/bin/external/bazel_tools", "-g", "-fno-canonical-system-headers", "-Wno-builtin-macro-redefined", "-D__DATE__=\"redacted\"", "-D__TIMESTAMP__=\"redacted\"", "-D__TIME__=\"redacted\"", "-c", "Main.c", "-o", "bazel-out/k8-fastbuild/bin/_objs/Program/Main.pic.o"],
+        Content: None,
+        Env: {},
+        Outputs: depset([<generated file _objs/Program/Main.pic.o>, <generated file _objs/Program/Main.pic.d>]),
+        Substitutions: None
+    }
+
+
+We can tinker a little with the `built-in features`_ before defining a new toolchain,
+
+    features = ["static_libgcc", "-pic", "-dependency_file"],
+    copts = ["-g"],
+
+And observe the difference in the output file `flags` (with linebreaks for each argument)::
+
+    bash $ diff <(sed 's/,/\n    /g' before) <(sed 's/,/\n    /g' bazel-bin/flags)
+    13,15d12
+    <      "-MD"
+    <      "-MF"
+    <      "bazel-out/k8-fastbuild/bin/_objs/Program/Main.pic.d"
+    17d13
+    <      "-fPIC"
+    26a23
+    >      "-g"
+
+
+.. _built-in features: https://bazel.build/docs/cc-toolchain-config-reference#legacy-features-patching-logic
+
+Find all the source files
+-------------------------
+But we must apply this recursively,
+to find all the source files.
+
+Problem Statement
+-----------------
+
+This was prompted by the weird observation that with some toolchains
+using `features = [<foobar>]` the action disappears.
+So we seek to reproduce the problem and find a solution.
+
+There are some currently missing, that we may need to implement
+
+    1) Custom toolchain
+    2) Custom feature that modifies the flags

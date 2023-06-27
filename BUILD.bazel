@@ -1,13 +1,21 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("//Library:compilation-flags.bzl", "compileflags")
 
 cc_binary(
     name = "Program",
+    features = ["static_libgcc", "-pic", "-dependency_file"],
+    copts = ["-g"],
     srcs = [
         "Main.c"
     ],
     deps = [
         "//Library:Library"
     ],
+)
+
+compileflags(
+    name = "flags",
+    dep = ":Program"
 )
 
 py_binary(
