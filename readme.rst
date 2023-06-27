@@ -824,9 +824,11 @@ to find all the source files.
 
 We create an aspect and read the `target.actions` to find them.
 Note: the `actions` are not part of the rule attribute from the aspect's point of view.
-We can now build an initial local aspect.
+We can now build an initial aspect, collecting one file per transitive target.
 
     $ bazel build //:Program --aspects=//Library:compilation-flags.bzl%compile_flags --output_groups=flags
+      bazel-bin/Library/Library.flags
+      bazel-bin/Program.flags
 
 Aside: using `ctx.rule.attr.actions`
 ++++++++++++++++++++++++++++++++++++

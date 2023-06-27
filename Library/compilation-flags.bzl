@@ -3,22 +3,23 @@
 load(":actions.bzl", "prettyAction")
 
 def _rule_impl(ctx):
-    return base(ctx.attr.name, ctx.attr.dep, ctx.actions)
+    return base(ctx.attr.name, ctx.attr.dep, [], ctx.actions)
 
-def base(name, dep, actions):
+def base(name, target, deps, actions):
     """Shared implementation for the rule and the aspect.
 
     Args:
         name: for error messages
-        dep: the target we depend on: a `CcInfo` carrier, we access its `actions` field.
+        target: the target we depend on: a `CcInfo` carrier, we access its `actions` field.
+        deps: dependencies for the target.
         actions: `ctx.actions`
     Returns:
         providers: (list)
     """
     out = actions.declare_file(name + ".flags")
-    targetactions = getattr(dep, "actions", [])
+    targetactions = getattr(target, "actions", [])
     if len(targetactions) == 0:
-        fail("No actions found for dep: '{}'".format(name))
+        fail("No actions found for target: '{}'".format(name))
 
     content = ""
     for action in targetactions:
@@ -26,18 +27,19 @@ def base(name, dep, actions):
             content += prettyAction(action)
 
     actions.write(out, content)
+    res = depset([out], transitive=[dep[OutputGroupInfo].flags for dep in deps])
 
     # TODO: collect transitive files.
     return [
         OutputGroupInfo(
-            default = depset([out]),
-            flags = depset([out]),
+            default = res,
+            flags = res,
         ),
     ]
 
 def _aspect_impl(target, ctx):
     # NB: `ctx.rule.attr.actions` does not exist. It is available under `target`.
-    return base(ctx.rule.attr.name, target, ctx.actions)
+    return base(ctx.rule.attr.name, target, ctx.rule.attr.deps, ctx.actions)
 
 compileflags = rule(
     implementation = _rule_impl,
