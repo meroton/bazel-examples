@@ -789,6 +789,15 @@ We can build this for the top-program::
     }
 
 
+This is also available through cquery::
+
+    $ bazel cquery --output=starlark --starlark:file=Library/actions.bzl //:Program
+    {
+        Mnemonic: CppCompile,
+        Args: [context.args() object],
+        ...
+    }
+
 We can tinker a little with the `built-in features`_ before defining a new toolchain,
 
     features = ["static_libgcc", "-pic", "-dependency_file"],
@@ -806,13 +815,50 @@ And observe the difference in the output file `flags` (with linebreaks for each 
     26a23
     >      "-g"
 
-
 .. _built-in features: https://bazel.build/docs/cc-toolchain-config-reference#legacy-features-patching-logic
 
 Find all the source files
 -------------------------
 But we must apply this recursively,
 to find all the source files.
+
+We create an aspect and read the `target.actions` to find them.
+Note: the `actions` are not part of the rule attribute from the aspect's point of view.
+We can now build an initial local aspect.
+
+    $ bazel build //:Program --aspects=//Library:compilation-flags.bzl%compile_flags --output_groups=flags
+
+Aside: using `ctx.rule.attr.actions`
+++++++++++++++++++++++++++++++++++++
+This does not work::
+
+    $ bazel build //:Program --aspects=//Library:compilation-flags.bzl%compile_flags
+    ...
+    Error in fail: No actions found for dep: 'Library'
+    ERROR: Analysis of aspects '[//Library:compilation-flags.bzl%compile_flags] with parameters {} on //:Program' failed;
+        build aborted: Analysis of target '//Library:Library' failed
+    ...
+
+This fails for the transitive dependency `//Library:Library`.
+Cquery can see its actions::
+
+    $ bazel cquery --output=starlark --starlark:file=Library/actions.bzl //Library:Library
+    {
+            Mnemonic: CppCompile,
+            Args: [context.args() object],
+            Argv: ["/usr/bin/gcc", "-U_FORTIFY_SOURCE", "-fstack-protector", "-Wall", "-Wunused-but-set-parameter", ...
+            Content: None,
+            Env: {},
+            Outputs: depset([<generated file Library/_objs/Library/Library.pic.o>, <generated file Library/_objs/Library/Library.pic.d>]),
+            Substitutions: None
+        }
+
+But the aspect can not, even when applied directly to it::
+
+    $ bazel cquery --aspects=//Library:compilation-flags.bzl%compile_flags --output=starlark --starlark:file=Library/actions.bzl //Library:Library
+    ...
+    Error in fail: No actions found for dep: 'Library'
+    ...
 
 Problem Statement
 -----------------
