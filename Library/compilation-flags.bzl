@@ -2,6 +2,8 @@
 
 load(":actions.bzl", "prettyAction")
 
+ActionCollectorInfo = provider("Files that are compiled", fields = {"files": "files"})
+
 def _rule_impl(ctx):
     return base(ctx.attr.name, ctx.attr.dep, [], ctx.actions)
 
@@ -22,18 +24,28 @@ def base(name, target, deps, actions):
         fail("No actions found for target: '{}'".format(name))
 
     content = ""
-    for action in targetactions:
+    files = []
+    for action in target.actions:
         if action.mnemonic == "CppCompile":
             content += prettyAction(action)
+            files.append(action.argv[-3])  # HACK
 
+    allfiles = depset(files, transitive=[dep[ActionCollectorInfo].files for dep in deps])
     actions.write(out, content)
     res = depset([out], transitive=[dep[OutputGroupInfo].flags for dep in deps])
 
+    index = actions.declare_file(name + ".index")
+    actions.write(index, "\n".join(allfiles.to_list()))
+
     # TODO: collect transitive files.
     return [
+        ActionCollectorInfo(
+            files = allfiles,
+        ),
         OutputGroupInfo(
             default = res,
             flags = res,
+            index = [index],
         ),
     ]
 

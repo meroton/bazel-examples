@@ -877,3 +877,42 @@ But the aspect can not, even when applied directly to it::
     ...
     Error in fail: No actions found for dep: 'Library'
     ...
+
+Write a single file
+-------------------
+
+There are two possible ways:
+
+1) create a merger action
+   + is more efficient, avoids large text allocations
+
+2) propagate the textual data through providers, and write them directly to a file.
+   + simpler for toy repositories.
+
+Write an index file
+-------------------
+Solution 1 is better for a real solution,
+but for this reproduction we can take a shortcut,
+as we only really care about the metadata of the action disappearing.
+So we can provide a list of actions, but *not* their command lines.
+An index file so to speak.
+
+::
+
+    $ bazel build //:Program --aspects=//Library:compilation-flags.bzl%compile_flags --output_groups=index,flags
+    Aspect //Library:compilation-flags.bzl%compile_flags of //:Program up-to-date:
+      bazel-bin/Library/Library.flags
+      bazel-bin/Program.flags
+      bazel-bin/Program.index
+    $ cat bazel-bin/Program.index
+    Library/Library.c
+    Main.c⏎
+
+We can now find a file that disappears in the `.index` file.
+
+Extension
++++++++++
+
+We could extend the provider with the expected files (all `srcs`)
+and compare the `compiledFiles` with `expectedFiles` in the provider/aspect
+to fail the build directly if a file disappears.
