@@ -1000,4 +1000,9 @@ Footnotes
 Rule Extension Efforts
 ----------------------
 
-.. TODO: design documents here
+Extending Bazel Rules:
+Inheritance: create child rules that can extend and modify parents
+https://docs.google.com/document/d/1p6z-shWf9sdqo_ep7dcjZCGvqN5r2jsPkJCqHHgfRp4/
+
+Subrule: Decomposing Starlark Rules
+https://docs.google.com/document/d/1RbNC88QieKvBEwir7iV5zZU08AaMlOzxhVkPnmKDedQ/
