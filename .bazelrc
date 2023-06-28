@@ -1,0 +1,4 @@
+build:cc --crosstool_top=//toolchain:cc
+build:cc --cpu=k8
+build:cc --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+

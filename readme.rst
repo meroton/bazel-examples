@@ -967,6 +967,33 @@ We use two `filegroups` to extract the non-default files and compare them in a d
        -> filegroup sources
           -> diff_test
 
+Use a custom toolchain with features to reproduce the error
+===========================================================
+
+Initial cc toolchain for host gcc.
+use `--config=cc`. This *builds* with the new gcc,
+and a typo in the `default_linker_flags` can fail the build.::
+
+    ERROR: /home/nils/task/meroton/basic-codegen/BUILD.bazel:4:10: Linking Program failed: (Exit 1):
+        gcc failed: error executing command (from target //:Program)
+        /usr/bin/gcc -o bazel-out/k8-fastbuild/bin/Program bazel-out/k8-fastbuild/bin/_objs/Program/Main.o
+        bazel-out/k8-fastbuild/bin/Library/libLibrary.a -Wl,-S -ltdc++
+
+    /usr/bin/ld: cannot find -ltdc++: No such file or directory
+    collect2: error: ld returned 1 exit status
+
+But the action collecting aspect does not use the new toolchain!::
+
+    $ bazel test //:validate_flags
+    Target //:validate_flags up-to-date:
+      bazel-bin/validate_flags-test.sh
+    //:validate_flags                                               (cached) PASSED in 0.0s
+
+    $ bazel test --config=cc //:validate_flags
+    Target //:validate_flags up-to-date:
+      bazel-bin/validate_flags-test.sh
+    //:validate_flags                                               (cached) PASSED in 0.0s
+
 Footnotes
 =========
 
