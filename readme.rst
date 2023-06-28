@@ -910,9 +910,26 @@ An index file so to speak.
 
 We can now find a file that disappears in the `.index` file.
 
-Extension
-+++++++++
+Compare against all expected sources
+------------------------------------
 
-We could extend the provider with the expected files (all `srcs`)
+We can extend the provider with the expected files (all `srcs`)
 and compare the `compiledFiles` with `expectedFiles` in the provider/aspect
 to fail the build directly if a file disappears.
+This is a common pattern, and there are many aspects that collect all the source files.
+I hope this will become easier with the ongoing `rule extension efforts`_.
+
+This now gives us two lists, that are admittedly sorted differently,
+that can be used to verify.::
+
+    $ bazel build //:Program --aspects=//Library:compilation-flags.bzl%compile_flags --output_groups=index,flags,sources
+    $ diff bazel-bin/Program.index bazel-bin/Program.source
+    <ok>
+
+Footnotes
+=========
+
+Rule Extension Efforts
+----------------------
+
+.. TODO: design documents here
