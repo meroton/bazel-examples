@@ -2,7 +2,6 @@ load(":cc_static_library.bzl", "cc_static_library")
 
 cc_library(
     name = "Library",
-    features = ["static_libgcc", "-pic", "-dependency_file"],
     hdrs = [
         "Library.h",
         "//Parameters:Parameters",

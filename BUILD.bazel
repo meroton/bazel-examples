@@ -3,8 +3,6 @@ load("//Library:compilation-flags.bzl", "compileflags")
 
 cc_binary(
     name = "Program",
-    features = ["static_libgcc", "-pic", "-dependency_file"],
-    copts = ["-g"],
     srcs = [
         "Main.c"
     ],
@@ -16,6 +14,28 @@ cc_binary(
 compileflags(
     name = "flags",
     dep = ":Program"
+)
+
+filegroup(
+    name = "index",
+    srcs = [":flags"],
+    output_group = "index",
+)
+
+filegroup(
+    name = "sources",
+    srcs = [":flags"],
+    output_group = "sources",
+)
+
+diff_test(
+    name = "validate_flags",
+    failure_message = """
+        The index of compiled files does not match the available files in the dependency tree of `:Program`.
+        For some reason a compilation action has disappeared from the `ctx.attr.actions` parsing.
+    """,
+    file1 = ":index",
+    file2 = ":sources",
 )
 
 py_binary(

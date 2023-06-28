@@ -8,8 +8,10 @@ ActionCollectorInfo = provider("Files that are compiled", fields = {
 })
 
 def _rule_impl(ctx):
-    # NB: We do not know what the source files are through the rule interface.
-    return base(ctx.attr.name, [], ctx.attr.dep, [], ctx.actions)
+    return [
+        ctx.attr.dep[OutputGroupInfo],
+        ctx.attr.dep[ActionCollectorInfo],
+    ]
 
 def sort(actions, *, infile, outfile):
     actions.run_shell(
@@ -94,14 +96,15 @@ def _aspect_impl(target, ctx):
         actions = ctx.actions
     )
 
-compileflags = rule(
-    implementation = _rule_impl,
-    attrs = {
-        "dep": attr.label(providers = [CcInfo])
-    }
-)
-
 compile_flags = aspect(
     implementation = _aspect_impl,
     attr_aspects = ["deps"],
 )
+
+compileflags = rule(
+    implementation = _rule_impl,
+    attrs = {
+        "dep": attr.label(aspects = [compile_flags], providers = [CcInfo])
+    }
+)
+

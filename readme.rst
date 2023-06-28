@@ -926,6 +926,47 @@ that can be used to verify.::
     $ diff bazel-bin/Program.index bazel-bin/Program.source
     <ok>
 
+Apply the aspect through the rule
+---------------------------------
+
+This is overdue.
+But now the rule applies the aspect, and we find all the files by building `//:flags`.
+
+::
+
+    $ bazel build //:flags
+    Target //:flags up-to-date:
+      bazel-bin/Library/Library.flags
+      bazel-bin/Program.flags
+
+The other files are optional with the output groups,
+and as we now allow the `default` output again we must address there errors in compilation.
+
+    ERROR: /home/nils/task/meroton/basic-codegen/BUILD.bazel:4:10: Compiling Main.c failed: error while parsing .d file:
+        /.../execroot/example/bazel-out/k8-fastbuild/bin/
+        _objs/Program/Main.pic.d (No such file or directory)
+    ERROR: /home/nils/task/meroton/basic-codegen/Library/BUILD.bazel:3:11: Compiling Library/Library.c failed:
+        error while parsing .d file:
+        /.../execroot/example/bazel-out/k8-fastbuild/bin/
+        Library/_objs/Library/Library.pic.d (No such file or directory)
+
+These stem from the hamfisted `features` modifications.
+Apparently we can disable `pic` with a feature, but it does not build. The illusion of choice.
+With a custom toolchain we can create features a la carte, and modify them more.
+
+Diff test the sources and index
+-------------------------------
+
+We use two `filegroups` to extract the non-default files and compare them in a diff_test.
+
+::
+
+    cc_binary :Program
+    -> compileflags :flags
+       -> filegroup index
+       -> filegroup sources
+          -> diff_test
+
 Footnotes
 =========
 
