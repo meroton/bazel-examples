@@ -104,7 +104,7 @@ compile_flags = aspect(
 compileflags = rule(
     implementation = _rule_impl,
     attrs = {
-        "dep": attr.label(aspects = [compile_flags], providers = [CcInfo])
-    }
+        "dep": attr.label(aspects = [compile_flags], providers = [CcInfo]),
+    },
 )
 

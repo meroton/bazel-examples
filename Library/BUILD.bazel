@@ -2,6 +2,7 @@ load(":cc_static_library.bzl", "cc_static_library")
 
 cc_library(
     name = "Library",
+    features = ["debug_symbols"],
     hdrs = [
         "Library.h",
         "//Parameters:Parameters",

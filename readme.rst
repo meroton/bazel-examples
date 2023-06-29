@@ -386,7 +386,6 @@ Any provider can be printed.
 One tip is to check for struct-members with `dir(<some struct>)`, so you know what can be dereferenced,
 when writing the pretty-printing code.
 
-
 Aquery
 ======
 
@@ -846,6 +845,7 @@ as that fails to compile when we tinker with the dependencies.
 Flag changes through `features` show up just like before, in `Library.flags`.
 
 Note: the `actions` are not part of the rule attribute from the aspect's point of view.
+
 Aside: using `ctx.rule.attr.actions`
 ++++++++++++++++++++++++++++++++++++
 This does not work::
@@ -982,7 +982,11 @@ and a typo in the `default_linker_flags` can fail the build.::
     /usr/bin/ld: cannot find -ltdc++: No such file or directory
     collect2: error: ld returned 1 exit status
 
-But the action collecting aspect does not use the new toolchain!::
+And we can add some compile flag as well.
+The list of compiled sources do not change with the compiler, unless something is broken!
+So the test result is just cached, all the input files are the same.
+
+::
 
     $ bazel test //:validate_flags
     Target //:validate_flags up-to-date:
@@ -993,6 +997,22 @@ But the action collecting aspect does not use the new toolchain!::
     Target //:validate_flags up-to-date:
       bazel-bin/validate_flags-test.sh
     //:validate_flags                                               (cached) PASSED in 0.0s
+
+But we see different values in the `.flags` file::
+
+    $ bazel build //:flags --config=cc
+    ...
+    $ grep Os bazel-bin/Program.flags
+            Argv: ["/usr/bin/gcc", ..., "-Os", "-c", "Main.c", "-o", "bazel-out/k8-fastbuild/bin/_objs/Program/Main.o"],
+    $ bazel build //:flags
+    ...
+    $ grep Os bazel-bin/Program.flags
+    <no match>
+
+Make the files disappear
+------------------------
+
+We have seen the problem for a feature called "debug_symbols".
 
 Footnotes
 =========
