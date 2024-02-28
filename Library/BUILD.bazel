@@ -2,18 +2,18 @@ load(":cc_static_library.bzl", "cc_static_library")
 
 cc_library(
     name = "Library",
+    srcs = [
+        "Library.c",
+    ],
     hdrs = [
         "Library.h",
         "//Parameters:Parameters",
-    ],
-    srcs = [
-        "Library.c",
     ],
     visibility = ["//visibility:public"],
 )
 
 cc_static_library(
     name = "Static",
-    deps = [":Library"],
     visibility = ["//visibility:public"],
+    deps = [":Library"],
 )

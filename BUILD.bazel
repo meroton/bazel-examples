@@ -3,26 +3,26 @@ load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 cc_binary(
     name = "Program",
     srcs = [
-        "Main.c"
+        "Main.c",
     ],
     deps = [
-        "//Library:Library"
+        "//Library",
     ],
 )
 
 py_binary(
     name = "Runner",
     srcs = ["run.py"],
+    data = [":Program"],
     main = "run.py",
     target_compatible_with = ["@platforms//:incompatible"],
-    data = [":Program"],
     deps = ["@rules_python//python/runfiles"],
 )
 
 sh_binary(
     name = "Touch",
-    tags = ["manual"],
     srcs = ["touch.sh"],
+    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
