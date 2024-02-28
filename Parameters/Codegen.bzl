@@ -3,9 +3,13 @@
 def _impl(ctx):
     out = ctx.actions.declare_file(ctx.attr.name + ".h")
 
+    workspace_name = ctx.workspace_name
+    print(workspace_name)
+
     args = ctx.actions.args()
     args.add("--base", ctx.files._base[0])
     args.add("--output", out.path)
+    args.add("--literal", "Workspace: " + workspace_name)
     args.add_all(ctx.files.srcs)
 
     ctx.actions.run(
