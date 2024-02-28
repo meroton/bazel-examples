@@ -14,6 +14,7 @@ py_binary(
     name = "Runner",
     srcs = ["run.py"],
     main = "run.py",
+    target_compatible_with = ["@platforms//:incompatible"],
     data = [":Program"],
     deps = ["@rules_python//python/runfiles"],
 )
