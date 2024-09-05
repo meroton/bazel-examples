@@ -1,6 +1,32 @@
 load(":cc_static_library.bzl", "cc_static_library")
 
 cc_library(
+    name = "header",
+    hdrs = ["private.h"],
+    # Dangerous `includes`. This should not be used.
+    # https://bazel.build/reference/be/c-cpp#cc_library.includes
+    #     Unlike COPTS, these flags are added for this rule and every rule that
+    #     depends on it. (Note: not the rules it depends upon!) Be very
+    #     careful, since this may have far-reaching effects. When in doubt, add
+    #     "-I" flags to COPTS instead.
+    #
+    # This is just an example to show that `implementation_deps` does not propagate it.
+    #
+    #      # Used through `deps`
+    #      $ bazel aquery //:Program | grep -B1 kalle
+    #      ...
+    #          -isystem \
+    #          Library/kalle-anka \
+    #          -isystem \
+    #          bazel-out/k8-fastbuild/bin/Library/kalle-anka \
+    #      ...
+    #      # Used through `implementation_deps`
+    #      $ bazel aquery //:Program | grep -C5 kalle
+    #      $ # Nothing
+    includes = ["kalle-anka"],
+)
+
+cc_library(
     name = "Library",
     srcs = [
         "Library.c",
@@ -9,6 +35,7 @@ cc_library(
         "Library.h",
         "//Parameters:Parameters",
     ],
+    implementation_deps = ["header"],
     visibility = ["//visibility:public"],
 )
 
