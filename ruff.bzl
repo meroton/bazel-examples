@@ -1,9 +1,12 @@
 """Ruff aspect for Python targets."""
 
-def _impl(_, ctx):
+def _impl(target, ctx):
     out = ctx.actions.declare_file(ctx.rule.attr.name + ".ruff")
     srcs = ctx.rule.files.srcs
     tool = ctx.toolchains["//toolchain:toolchain_type"].info.tool
+
+    if "NoLint" in ctx.rule.tags:
+        return []
 
     touchargs = ctx.actions.args()
     touchargs.add(out)
