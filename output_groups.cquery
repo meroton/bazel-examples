@@ -30,7 +30,8 @@ def format(target):
 
     __providers = LIST_SEP + LINE_SEP.join(_providers.keys())
 
-    _output_groups = LIST_SEP + LINE_SEP.join(dir(output))
+    pruned = [x for x in dir(output) if x not in ["to_json", "to_proto"]]
+    _output_groups = LIST_SEP + LINE_SEP.join(pruned)
 
     res = "\n".join(["providers:", __providers, "", "output_groups:", _output_groups]) + "\n"
 
