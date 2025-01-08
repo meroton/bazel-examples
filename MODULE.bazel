@@ -1,0 +1,25 @@
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "rules_python", version = "1.0.0")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "bin",
+    url = "https://github.com/astral-sh/ruff/releases/download/v0.0.272/ruff-x86_64-unknown-linux-gnu.tar.gz",
+    build_file_content = """
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+
+native_binary(
+    name = "Ruff",
+    src = "ruff",
+    out = "ruff",
+    visibility = ["//visibility:public"],
+)
+    """,
+    integrity = "sha256-4uVMPHDD9r+BAasuTLLRSuvabY7LqGIr0cziI3hkHsw="
+)
+
+register_toolchains(
+    "//toolchain:ruff_toolchain"
+)
