@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("//:symbolic.bzl", symbolic_py_binary = "py_binary")
 
 cc_binary(
     name = "Program",
@@ -10,14 +11,20 @@ cc_binary(
     ],
 )
 
-py_binary(
-    name = "Runner",
-    srcs = ["run.py"],
-    data = [":Program"],
-    main = "run.py",
-    target_compatible_with = ["@platforms//:incompatible"],
-    deps = ["@rules_python//python/runfiles"],
-)
+[
+    impl(
+        name = "Runner-{}".format(suffix),
+        srcs = ["run.py"],
+        data = [":Program"],
+        main = "run.py",
+        target_compatible_with = ["@platforms//:incompatible"],
+        deps = ["@rules_python//python/runfiles"],
+    )
+    for impl, suffix in [
+        (py_binary, "legacy"),
+        (symbolic_py_binary, "symbolic"),
+    ]
+]
 
 sh_binary(
     name = "Touch",
