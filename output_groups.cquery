@@ -10,9 +10,31 @@
 """
 
 
-LIST_SEP = "   - "
+INDENT = "  "
+LIST_SEP = INDENT + "- "
 LINE_SEP = "\n" + LIST_SEP
 _SEP = "\n   "
+
+
+# Two functions that are available to all Starlark objects.
+# If we call `dir()` to list the fields in a struct these will always show up.
+STARLARK_OBJECT_METHODS = ["to_json", "to_proto"]
+
+# DefaultInfo: https://bazel.build/rules/lib/providers/DefaultInfo
+# This is not reported by `providers`, instead we have the pseudo-providers,
+# (constituent providers?) `File{,sToRun}Provider`.
+# Which are documented, but not available in a rule context.
+# As the goal of this script is partly as a basis for provider exploration code
+# to help in developing new rules
+# we want it to accurately reflect the providers a rule can access.
+#
+# https://bazel.build/rules/lib/providers/FilesToRunProvider
+# https://bazel.build/rules/lib/providers/file_provider
+DEFAULT_INFO_PSEUDO_PROVIDERS = ["FileProvider", "FilesToRunProvider"]
+FILES = "files"
+FILES_TO_RUN = "files_to_run"
+DEFAULT_RUNFILES = "default_runfiles"
+DATA_RUNFILES = "data_runfiles"
 
 def mapPath(x):
     if x == None:
@@ -25,36 +47,56 @@ def header(x):
 
 
 def format(target):
+    all_available_providers = providers(target).keys()
+    available_providers = [x for x in all_available_providers if x not in DEFAULT_INFO_PSEUDO_PROVIDERS]
+    construct_default_info = available_providers != all_available_providers
+
     _providers = providers(target)
     output = _providers.get("OutputGroupInfo")
 
-    __providers = LIST_SEP + LINE_SEP.join(_providers.keys())
+    __providers = LIST_SEP + LINE_SEP.join(available_providers + ["DefaultInfo"] if construct_default_info else [])
 
-    pruned = [x for x in dir(output) if x not in ["to_json", "to_proto"]]
+    pruned = [x for x in dir(output) if x not in STARLARK_OBJECT_METHODS]
     _output_groups = LIST_SEP + LINE_SEP.join(pruned)
 
     res = "\n".join(["providers:", __providers, "", "output_groups:", _output_groups]) + "\n"
+    defaultinfo = {}
 
-    # This provider is often (always?) present, but may be empty.
+    # # Reconstruct `DefaultInfo` from `File{,sToRun}Provider`.
+    # This is DefaultInfo.files:
+    # TODO: There are four keys: files, files_to_run, data_runfiles, default_runfiles.
     key = 'FileProvider'
     if key in _providers:
-        res += header(key)
         val = _providers[key]
         files = val.files_to_build.to_list()
-        if files:
-            joined = LINE_SEP.join([f.path for f in files])
-            res += (LIST_SEP + joined) + "\n"
+        defaultinfo[FILES] = files
 
+    # This is DefaultInfo.files_to_run
+    # TODO: Is the manifest part of the `runfiles` members?
     key = 'FilesToRunProvider'
     if key in _providers:
         val = _providers[key]
+        defaultinfo[FILES_TO_RUN] = val
 
-        res += header(key)
-        res += "{sep}{a}\n{sep}{b}\n".format(
-            sep = LIST_SEP,
-            a = mapPath(val.executable),
-            b = mapPath(val.runfiles_manifest)
-        )
+    # # Print some common providers
+    # DefaultInfo
+
+    # TODO: are there situations where this does not exist at all?
+    # That Cquery can know?
+    if construct_default_info:
+        res += header("DefaultInfo")
+        if defaultinfo[FILES]:
+            res += INDENT + FILES + ":"
+            joined = LINE_SEP.join([f.path for f in defaultinfo[FILES]])
+            res += ("\n" + INDENT + LIST_SEP + joined) + "\n"
+        if defaultinfo[FILES_TO_RUN]:
+            val = defaultinfo[FILES_TO_RUN]
+            res += INDENT + FILES_TO_RUN + ":"
+            res += "\n{sep}{a}\n{sep}{b}\n".format(
+                sep = INDENT + LIST_SEP,
+                a = mapPath(val.executable),
+                b = mapPath(val.runfiles_manifest)
+            )
 
     # NB: You may iterate over all output groups and print them here. This just checks default.
     group = "default"
