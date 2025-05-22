@@ -645,7 +645,7 @@ But if you need to remove targets from the build phase you need to express that 
 Before this flag nothing could be done
 ++++++++++++++++++++++++++++++++++++++
 
-Before `--build_manual_tests` was introduce there was no way to build manual targets through wildcards.
+Before `--build_manual_tests` was introduced there was no way to build manual targets through wildcards.
 There is (still) a flag to filter and remove based on tags, and it can also add stuff back.
 But anything tagged as manual can not be retrieved through `--build_tag_filters`.
 Neither of the following does anything::
