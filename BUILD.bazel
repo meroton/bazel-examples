@@ -32,6 +32,12 @@ sh_binary(
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )
+sh_binary(
+    name = "DoNotTouch",
+    srcs = ["touch.sh"],
+    tags = ["manual", "DoNot"],
+    visibility = ["//visibility:public"],
+)
 
 # # Verify the program output against known results.
 # The `outs` attribute creates an output artifact

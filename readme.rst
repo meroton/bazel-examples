@@ -660,3 +660,39 @@ The workaround then was to use a query, and xargs that to `bazel build`.::
     bazel query //... | xargs bazel build
 
 The targets are then all named will be built.
+
+Cquery does not filter away manuals
++++++++++++++++++++++++++++++++++++
+
+::
+
+    q-build //:Touch | grep tags
+    # tags = ["manual"],
+    bazel --quiet cquery \
+        --output starlark \
+        --starlark:expr "target.label" \
+        //... | grep Touch
+    # @@//:Touch
+
+The manual targets can be filtered away with further tag filters
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Adding a new "DoNot" version that we want to filter away
+
+::
+
+    echo "no manual"
+    bazel build --show_result=1000 //:all 2>&1 | grep Touch
+    echo "include manuals"
+    bazel build --show_result=1000 --build_manual_tests //:all 2>&1 | grep Touch
+    echo "include manuals but remove DoNot"
+    bazel build --show_result=1000 --build_manual_tests //:all --build_tag_filters=-DoNot 2>&1 | grep Touch
+    # no manual
+    # include manuals
+    # Target //:DoNotTouch up-to-date:
+    #   bazel-bin/DoNotTouch
+    # Target //:Touch up-to-date:
+    #   bazel-bin/Touch
+    # include manuals but remove DoNot
+    # Target //:Touch up-to-date:
+    #   bazel-bin/Touch
