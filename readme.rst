@@ -696,3 +696,15 @@ Adding a new "DoNot" version that we want to filter away
     # include manuals but remove DoNot
     # Target //:Touch up-to-date:
     #   bazel-bin/Touch
+
+You can now operate on the tags just like other strings,
+the special "manual" behavior is just removed.
+
+::
+
+    bazel build --show_result=1000 --build_manual_tests //:all --build_tag_filters=-manual 2>&1 | grep Touch
+    # Nothing
+
+    bazel build --show_result=1000 --build_manual_tests //:all --build_tag_filters=DoNot 2>&1 | grep Touch
+    # Target //:DoNotTouch up-to-date:
+    #  bazel-bin/DoNotTouch
