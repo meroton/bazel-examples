@@ -234,8 +234,8 @@ This can be rendered to an svg with `graphviz` and the `dot` program.
 
    $ bazel cquery ... | dot -Tsvg -o graph.svg
 
-Config hash
------------
+Config hash _`bazel config`
+---------------------------
 
 In this example the config hash is "ca63adb", it may differ for you,
 update the `sed` command accordingly.
@@ -580,6 +580,14 @@ But they show up with `--build_manual_tests`.
 Aspects Results
 ---------------
 
+Aspects are very powerful
+but it may be a little hard to understand
+what they add to the build graph.
+Here are some notes on how to find their results before and after a build.
+
+Post-hoc: show-result
++++++++++++++++++++++
+
 When building single targets Bazel will print the result by default
 but this is suppressed when there are multiple build targets.
 In the same fashion
@@ -603,6 +611,40 @@ adding an aspect counts as two results and the print is omitted.
       bazel-bin/Parameters/Generate
     Aspect //:print.bzl%print of //Parameters:Generate up-to-date:
       bazel-bin/Parameters/Generate.name
+
+Can we investigate the aspect with cquery?
+++++++++++++++++++++++++++++++++++++++++++
+
+It seems not.
+
+First of, aspects add another configuration of the same target
+to the build scope.
+They do not add extra things into *the same* target,
+however it is more subtle than regular transitions and multi-configuration builds.
+
+    bazel --quiet cquery //Parameters:Generate
+    //Parameters:Generate (3723722)
+    //Parameters:Generate (ca5463b)
+    bazel --quiet cquery --aspects //:print.bzl%print //Parameters:Generate
+    //Parameters:Generate (3723722)
+    //Parameters:Generate (ca5463b)
+
+Note that the configs do not change when we add the aspect.
+As before, we can invesitgate these hashes with `bazel-config`_.
+
+The other cquery output formats can not access this extra target.
+
+::
+
+    $ bazel --quiet cquery --output files --aspects //:print.bzl%print //Parameters:Generate
+    bazel-out/k8-fastbuild/bin/Parameters/Generate
+    Parameters/Generate.py
+    bazel-out/k8-opt-exec-ST-d57f47055a04/bin/Parameters/Generate
+
+These are just the regular files,
+the extra file provided by the aspect is not shown.
+
+.. _bazel-config: `bazel config`_
 
 Manual tag
 ----------
