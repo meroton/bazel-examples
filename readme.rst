@@ -234,8 +234,10 @@ This can be rendered to an svg with `graphviz` and the `dot` program.
 
    $ bazel cquery ... | dot -Tsvg -o graph.svg
 
-Config hash _`bazel config`
----------------------------
+.. _bazel config:
+
+Config hash
+-----------
 
 In this example the config hash is "ca63adb", it may differ for you,
 update the `sed` command accordingly.
@@ -643,8 +645,6 @@ The other cquery output formats can not access this extra target.
 
 These are just the regular files,
 the extra file provided by the aspect is not shown.
-
-.. _bazel-config: `bazel config`_
 
 Manual tag
 ----------
