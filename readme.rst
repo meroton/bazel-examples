@@ -577,6 +577,33 @@ By default they are not built::
 
 But they show up with `--build_manual_tests`.
 
+Aspects Results
+---------------
+
+When building single targets Bazel will print the result by default
+but this is suppressed when there are multiple build targets.
+In the same fashion
+adding an aspect counts as two results and the print is omitted.
+
+::
+
+    # Single target builds show the results.
+    $ bazel --quiet build //Parameters:Generate
+    Target //Parameters:Generate up-to-date:
+      bazel-bin/Parameters/Generate
+    # But multiple targets do not.
+    $ bazel --quiet build //...
+    $
+
+    # Enabling aspects creates two results and they are not printed.
+    $ bazel --quiet build --aspects //:print.bzl%print //Parameters:Generate
+    # Enable them with --show_result
+    $ bazel --quiet build --aspects //:print.bzl%print //Parameters:Generate --show_result=2
+    Target //Parameters:Generate up-to-date:
+      bazel-bin/Parameters/Generate
+    Aspect //:print.bzl%print of //Parameters:Generate up-to-date:
+      bazel-bin/Parameters/Generate.name
+
 Manual tag
 ----------
 
