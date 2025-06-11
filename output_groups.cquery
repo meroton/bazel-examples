@@ -25,13 +25,19 @@ def header(x):
 
 
 def format(target):
+    # NB: Some unusual targets do not have providers
+    # Like this dep: @@bazel_tools//tools/allowlists/function_transition_allowlist:function_transition_allowlist
     _providers = providers(target)
-    output = _providers.get("OutputGroupInfo")
+    if not _providers:
+        return ""
 
     __providers = LIST_SEP + LINE_SEP.join(_providers.keys())
 
-    pruned = [x for x in dir(output) if x not in ["to_json", "to_proto"]]
-    _output_groups = LIST_SEP + LINE_SEP.join(pruned)
+    output = _providers.get("OutputGroupInfo", [])
+    _output_groups = ""
+    if output:
+        pruned = [x for x in dir(output) if x not in ["to_json", "to_proto"]]
+        _output_groups = LIST_SEP + LINE_SEP.join(pruned)
 
     res = "\n".join(["providers:", __providers, "", "output_groups:", _output_groups]) + "\n"
 
@@ -62,11 +68,5 @@ def format(target):
         res += header("OutputGroupInfo " + group)
         res += LIST_SEP + ", ".join([f.path for f in output[group].to_list()])
         res += "\n"
-
-    key = 'ToolchainInfo'
-    if key in _providers:
-        val = _providers[key]
-        res += header(key)
-        res += LIST_SEP + "info.tool: " + val.info.tool.path
 
     return res
