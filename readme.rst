@@ -624,15 +624,17 @@ to the build scope.
 They do not add extra things into *the same* target,
 however it is more subtle than regular transitions and multi-configuration builds.
 
-    bazel --quiet cquery //Parameters:Generate
+::
+
+    $ bazel --quiet cquery //Parameters:Generate
     //Parameters:Generate (3723722)
     //Parameters:Generate (ca5463b)
-    bazel --quiet cquery --aspects //:print.bzl%print //Parameters:Generate
+    $ bazel --quiet cquery --aspects //:print.bzl%print //Parameters:Generate
     //Parameters:Generate (3723722)
     //Parameters:Generate (ca5463b)
 
 Note that the configs do not change when we add the aspect.
-As before, we can invesitgate these hashes with `bazel-config`_.
+As before, we can investigate these hashes with `bazel-config`_.
 
 The other cquery output formats can not access this extra target.
 
@@ -645,6 +647,32 @@ The other cquery output formats can not access this extra target.
 
 These are just the regular files,
 the extra file provided by the aspect is not shown.
+
+What if we wrap the aspect with a rule?
++++++++++++++++++++++++++++++++++++++++
+
+Rules can apply aspects to their dependencies
+and read the providers created by the aspect.
+However, they do not show up either when analyzing the rule.
+
+Obviously the file created through the aspect and communicated through the provider
+is available and can be built with the rule.
+But cquery still does not find the provider.
+
+We now have a `PrintInfo` provider in `print.bzl` that we would like to observe.
+The file name is read through that provider::
+
+    $ bazel --quiet build //:Program.name
+    Target //:Program.name up-to-date:
+      bazel-bin/Program.name
+
+    $ bazel query 'deps(//:Program.name, 1)'
+    cc_binary rule //:Program
+    print_r rule //:Program.name
+
+    $ bazel --quiet cquery --output=starlark --starlark:file=output_groups.cquery 'deps(//:Program.name, 1)' \
+        | grep PrintInfo
+    $
 
 Manual tag
 ----------
