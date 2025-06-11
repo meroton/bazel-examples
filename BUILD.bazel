@@ -1,5 +1,7 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("//:symbolic.bzl", symbolic_py_binary = "py_binary")
+load("//:print.bzl", "print_r")
+
 
 cc_binary(
     name = "Program",
@@ -39,6 +41,10 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
 
+print_r(
+    name = "Program.name",
+    dep = ":Program",
+)
 # # Verify the program output against known results.
 # The `outs` attribute creates an output artifact
 # that can actually be used in the `diff_test`,
