@@ -634,7 +634,7 @@ however it is more subtle than regular transitions and multi-configuration build
     //Parameters:Generate (ca5463b)
 
 Note that the configs do not change when we add the aspect.
-As before, we can investigate these hashes with `bazel-config`_.
+As before, we can investigate these hashes with `bazel config`_.
 
 The other cquery output formats can not access this extra target.
 
@@ -672,7 +672,7 @@ The file name is read through that provider::
 
     $ bazel --quiet cquery --output=starlark --starlark:file=output_groups.cquery 'deps(//:Program.name, 1)' \
         | grep PrintInfo
-    $
+    $ # No results
 
 Manual tag
 ----------
