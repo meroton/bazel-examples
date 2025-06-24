@@ -35,7 +35,7 @@ def main(runfile: str, args: List[str]):
 
 if __name__ == '__main__':
     if len(sys.argv) < 1:
-        printf(sys.stderr, "Requires an argument for the payload, to find it in runfiles.")
+        print(sys.stderr, "Requires an argument for the payload, to find it in runfiles.")
         exit(1)
 
     runfile = sys.argv[1]
