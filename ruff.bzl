@@ -1,6 +1,6 @@
 """Ruff aspect for Python targets."""
 
-load("@rules_python//python/private:py_info.bzl", "PyInfo")
+load("@rules_python//python:defs.bzl", "PyInfo")
 
 def _impl(_target, ctx):
     out = ctx.actions.declare_file(ctx.rule.attr.name + ".ruff")
