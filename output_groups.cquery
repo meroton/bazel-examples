@@ -1,4 +1,7 @@
-"""Crude pretty-printer for providers and output groups.
+"""
+Crude pretty-printer for providers and output groups.
+=====================================================
+
 
     $ bazel cquery --output=starlark --starlark:file=output_groups.cquery //path/to:target
 
@@ -7,6 +10,28 @@
     $ echo "output_groups.cquery" \
         | entr \
         bazel cquery --output=starlark --starlark:file=output_groups.cquery //path/to:target
+
+
+Nota Bene on private provider definitions
+-----------------------------------------
+Often language modules define their providers in private files
+and re-export them through their public API (defs.bzl).
+So the printed provider may not be suitable to use.
+
+Example: PyInfo
+
+::
+
+    $ bazel cquery --output=starlark --starlark:file=output_groups.c
+
+    providers:
+       ...
+       - @@rules_python+//python/private:py_executable_info.bzl%PyExecutableInfo
+       - @@rules_python+//python/private:py_runtime_info.bzl%PyRuntimeInfo
+       - @@rules_python+//python/private:py_cc_link_params_info.bzl%PyCcLinkParamsInfo
+       - @@rules_python+//python/private:py_info.bzl%PyInfo
+
+To use this one should instead load `@rules_python//python:defs.bzl%PyInfo`.
 """
 
 
