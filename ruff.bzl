@@ -1,14 +1,23 @@
 """Ruff aspect for Python targets."""
 
 load("@rules_python//python:defs.bzl", "PyInfo")
+load("//lint:lint.bzl", "LintInfo")
 
 def _impl(_target, ctx):
+    lint_info = None
+    for target in getattr(ctx.rule.attr, "aspect_hints", []):
+        if LintInfo in target:
+            if lint_info != None:
+                # TODO: List the targets.
+                fail("Multiple 'LintInfo' providers among the aspect hints.")
+            lint_info = target[LintInfo]
+
+    if lint_info and not lint_info.should_lint:
+        return []
+
     out = ctx.actions.declare_file(ctx.rule.attr.name + ".ruff")
     srcs = ctx.rule.files.srcs
     tool = ctx.toolchains["//toolchain:toolchain_type"].info.tool
-
-    if "NoLint" in ctx.rule.attr.tags:
-        return []
 
     touchargs = ctx.actions.args()
     touchargs.add(out)

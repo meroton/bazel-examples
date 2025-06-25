@@ -1,0 +1,13 @@
+load(":lint.bzl", "lint")
+load("@rules_python//python:defs.bzl", "py_library")
+
+lint(
+    name = "no",
+    should_lint = False,
+)
+
+py_library(
+    name = "broken-formatting",
+    srcs = ["exemplar/ugly.py"],
+    aspect_hints = [":no"],
+)
