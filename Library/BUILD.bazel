@@ -44,3 +44,11 @@ cc_static_library(
     visibility = ["//visibility:public"],
     deps = [":Library"],
 )
+
+# # Nested py_binaries
+py_binary(
+    name = "py_inner",
+    srcs = ["main.py"],
+    main = "main.py",
+    visibility = ["//visibility:public"],
+)
