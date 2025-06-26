@@ -74,14 +74,8 @@ diff_test(
 
 # # Nested py_binaries
 py_binary(
-    name = "py_inner",
-    srcs = ["main.py"],
-    main = "main.py",
-)
-
-py_binary(
     name = "py_outer",
-    srcs = [":py_inner"],
+    srcs = ["//Library:py_inner"],
     # NB(nils): the `main` must be set if the wrapper is defined in the same package
     #           If the wrapper is defined in another package the `name` can be reused,
     #           and then the main-heuristic will work provided that the main python file
