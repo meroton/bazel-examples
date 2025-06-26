@@ -25,6 +25,13 @@ def _impl(_target, ctx):
     ruffargs = ctx.actions.args()
     ruffargs.add("check")
     ruffargs.add_all(srcs)
+    # TODO: allow suppression of certain warnings
+    # if lint_info and lint_info.suppressions:
+    #     ruffargs.add_all("--ignore", lint_info.suppressions)
+
+    # TODO: ignore some files from srcs
+    # if lint_info and lint_info.ignore_files:
+    #    srcs = prune(srcs, lint_info.ignore_files)
 
     ctx.actions.run(
         executable = ctx.executable._touch,
