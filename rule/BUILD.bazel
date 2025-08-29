@@ -1,0 +1,6 @@
+load(":copy_files.bzl", "copy_files")
+
+copy_files(
+    name = "copy",
+    srcs = ["src/a"],
+)
