@@ -1,0 +1,3 @@
+# NB: This is needed for the outer module to query @inner//...
+# :(
+bazel-inner
