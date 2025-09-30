@@ -1,4 +1,4 @@
-load(":lint.bzl", "lint")
+load(":lint.bzl", "lint", "lint_inline")
 load("@rules_python//python:defs.bzl", "py_library")
 
 lint(
@@ -9,5 +9,18 @@ lint(
 py_library(
     name = "broken-formatting",
     srcs = ["exemplar/ugly.py"],
-    aspect_hints = [":no"],
+    aspect_hints = [
+        ":no",
+    ],
+)
+
+py_library(
+    name = "ok-formatting",
+    srcs = ["exemplar/ok.py"],
+    aspect_hints = [
+        lint_inline(
+            name = "yes",
+            should_lint = True,
+        )
+    ],
 )

@@ -21,3 +21,7 @@ lint = rule(
         # ignore_files: attr.label_list(),
     },
 )
+
+def lint_inline(name, **kwargs):
+    lint(name = name, **kwargs)
+    return name
