@@ -24,3 +24,9 @@ native_binary(
 register_toolchains(
     "//toolchain:ruff_toolchain"
 )
+
+bazel_dep(name = "inner")
+local_path_override(
+    module_name = "inner",
+    path = "inner",
+)

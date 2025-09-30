@@ -1,4 +1,8 @@
-bazel-basic-codegen
 bazel-bin
 bazel-out
 bazel-testlogs
+bazel-bazel-examples
+
+MODULE.bazel.lock
+inner/MODULE.bazel.lock
+inner/bazel-inner
