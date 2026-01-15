@@ -1,0 +1,9 @@
+filegroup(
+    name = "with spaces",
+    srcs = ["file with spaces"],
+)
+
+filegroup(
+    name = "🤠",
+    srcs = [":with spaces"],
+)
