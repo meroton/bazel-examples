@@ -83,3 +83,11 @@ py_binary(
     #           must be provided.
     main = "main.py",
 )
+
+# # Manual for unloadable targets?
+
+py_binary(
+    name = "py_outer_with_missing_deps",
+    tags = ["manual"],
+    deps = ["//:missing"],
+)
