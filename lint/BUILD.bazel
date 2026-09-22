@@ -24,3 +24,14 @@ py_library(
         )
     ],
 )
+
+filegroup(
+    name = "hidden",
+    srcs = ["exemplar/ugly.py"],
+)
+
+py_library(
+    name = "hidden-srcs",
+    srcs = ["hidden"],
+    aspect_hints = [":yes"],
+)
