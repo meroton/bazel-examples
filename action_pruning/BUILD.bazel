@@ -1,0 +1,31 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+cc_binary(
+    name = "single_binary",
+    srcs = [
+        "add.c",
+        "add.h",
+        "main.c",
+        "times_two.c",
+        "times_two.h",
+    ],
+)
+
+cc_binary(
+    name = "binary_with_deps",
+    srcs = ["main.c"],
+    deps = [":times_two"],
+)
+
+cc_library(
+    name = "add",
+    srcs = ["add.c"],
+    hdrs = ["add.h"],
+)
+
+cc_library(
+    name = "times_two",
+    srcs = ["times_two.c"],
+    hdrs = ["times_two.h"],
+    deps = [":add"],
+)
