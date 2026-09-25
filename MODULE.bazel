@@ -1,12 +1,28 @@
-bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "platforms", version = "0.0.10")
-bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_cc", version = "0.2.25")
+bazel_dep(name = "rules_python", version = "2.3.4")
+
+rules_python_config = use_extension("@rules_python//python/extensions:config.bzl", "config")
+rules_python_config.explicit_init_py(default = True)
+
+bazel_dep(name = "rules_shell", version = "0.8.0")
+
+# The tansitively resolved versions are not Bazel 9.2.0 compatible.
+single_version_override(
+    module_name = "aspect_bazel_lib",
+    version = "2.22.5",
+)
+
+single_version_override(
+    module_name = "rules_nodejs",
+    version = "6.7.5",
+)
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "bin",
-    url = "https://github.com/astral-sh/ruff/releases/download/v0.0.272/ruff-x86_64-unknown-linux-gnu.tar.gz",
     build_file_content = """
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 
@@ -17,11 +33,12 @@ native_binary(
     visibility = ["//visibility:public"],
 )
     """,
-    integrity = "sha256-4uVMPHDD9r+BAasuTLLRSuvabY7LqGIr0cziI3hkHsw="
+    integrity = "sha256-4uVMPHDD9r+BAasuTLLRSuvabY7LqGIr0cziI3hkHsw=",
+    url = "https://github.com/astral-sh/ruff/releases/download/v0.0.272/ruff-x86_64-unknown-linux-gnu.tar.gz",
 )
 
 register_toolchains(
-    "//toolchain:ruff_toolchain"
+    "//toolchain:ruff_toolchain",
 )
 
 bazel_dep(name = "inner")

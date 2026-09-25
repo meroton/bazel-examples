@@ -1,0 +1,2 @@
+common --check_direct_dependencies=error
+common --test_output=errors

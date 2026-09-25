@@ -1,3 +1,6 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
 # # Configure a binary based on compilation mode
 # We do not use CPU here, as the official documentation example does
 # because our toolchain is not setup to work on different CPUs.

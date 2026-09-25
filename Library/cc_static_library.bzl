@@ -6,6 +6,7 @@ Reference: https://gist.github.com/oquenchil/3f88a39876af2061f8aad6cdc9d7c045
 """
 
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
 
 TOOLS_CPP_REPO = "@bazel_tools"
 
@@ -89,5 +90,4 @@ cc_static_library = rule(
         ),
     },
     toolchains = [TOOLS_CPP_REPO + "//tools/cpp:toolchain_type"],
-    incompatible_use_toolchain_transition = True,
 )

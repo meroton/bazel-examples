@@ -1,7 +1,9 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
-load("//:symbolic.bzl", symbolic_py_binary = "py_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//:print.bzl", "print_r")
-
+load("//:symbolic.bzl", symbolic_py_binary = "py_binary")
 
 cc_binary(
     name = "Program",
@@ -34,10 +36,14 @@ sh_binary(
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )
+
 sh_binary(
     name = "DoNotTouch",
     srcs = ["touch.sh"],
-    tags = ["manual", "DoNot"],
+    tags = [
+        "DoNot",
+        "manual",
+    ],
     visibility = ["//visibility:public"],
 )
 
