@@ -8,12 +8,21 @@ rules_python_config.explicit_init_py(default = True)
 
 bazel_dep(name = "rules_shell", version = "0.8.0")
 
-# The tansitively resolved versions are not Bazel 9.2.0 compatible.
+# The tansitively resolved version is not Bazel 9.2.0 compatible.
+# ERROR: Traceback (most recent call last):
+#         File "external/aspect_bazel_lib++toolchains+copy_directory_toolchains/defs.bzl", line 15, column 20, in <toplevel>
+#                 resolved_toolchain = rule(
+# Error in rule: rule() got unexpected keyword argument 'incompatible_use_toolchain_transition'
 single_version_override(
     module_name = "aspect_bazel_lib",
     version = "2.22.5",
 )
 
+# The tansitively resolved version is not Bazel 9.2.0 compatible.
+# ERROR: Traceback (most recent call last):
+#         File "external/rules_nodejs++node+nodejs_toolchains/defs.bzl", line 15, column 20, in <toplevel>
+#                 resolved_toolchain = rule(
+# Error in rule: rule() got unexpected keyword argument 'incompatible_use_toolchain_transition'
 single_version_override(
     module_name = "rules_nodejs",
     version = "6.7.5",
