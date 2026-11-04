@@ -1,0 +1,12 @@
+load(":double.bzl", "double_r")
+
+filegroup(
+    name = "srcs",
+    srcs = ["BUILD.bazel"],
+)
+
+
+double_r(
+    name = "double",
+    tags = ["manual"],
+)
